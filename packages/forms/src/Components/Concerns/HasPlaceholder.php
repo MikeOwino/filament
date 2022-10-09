@@ -2,21 +2,21 @@
 
 namespace Filament\Forms\Components\Concerns;
 
+use Closure;
+
 trait HasPlaceholder
 {
-    protected $placeholder;
+    protected string | Closure | null $placeholder = null;
 
-    public function getPlaceholder()
+    public function placeholder(string | Closure | null $placeholder): static
     {
-        return $this->placeholder;
-    }
-
-    public function placeholder($placeholder)
-    {
-        $this->configure(function () use ($placeholder) {
-            $this->placeholder = $placeholder;
-        });
+        $this->placeholder = $placeholder;
 
         return $this;
+    }
+
+    public function getPlaceholder(): ?string
+    {
+        return $this->evaluate($this->placeholder);
     }
 }

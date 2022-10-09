@@ -2,186 +2,188 @@
 
 namespace Filament\Forms\Components;
 
+use Closure;
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
+
 class KeyValue extends Field
 {
-    protected $addButtonLabel = 'forms::fields.keyValue.buttons.add.label';
+    use HasExtraAlpineAttributes;
 
-    protected $canAddRows = true;
+    protected string $view = 'forms::components.key-value';
 
-    protected $canDeleteRows = true;
+    protected string | Closure | null $addButtonLabel = null;
 
-    protected $canEditKeys = true;
+    protected bool | Closure $shouldDisableAddingRows = false;
 
-    protected $deleteButtonLabel = 'forms::fields.keyValue.buttons.delete.label';
+    protected bool | Closure $shouldDisableDeletingRows = false;
 
-    protected $isSortable = false;
+    protected bool | Closure $shouldDisableEditingKeys = false;
 
-    protected $keyLabel = 'forms::fields.keyValue.fields.key.label';
+    protected bool | Closure $shouldDisableEditingValues = false;
 
-    protected $keyPlaceholder = 'forms::fields.keyValue.fields.key.placeholder';
+    protected string | Closure | null $deleteButtonLabel = null;
 
-    protected $sortButtonLabel = 'forms::fields.keyValue.buttons.sort.label';
+    protected string | Closure | null $keyLabel = null;
 
-    protected $valueLabel = 'forms::fields.keyValue.fields.value.label';
+    protected string | Closure | null $valueLabel = null;
 
-    protected $valuePlaceholder = 'forms::fields.keyValue.fields.value.placeholder';
+    protected string | Closure | null $keyPlaceholder = null;
 
-    protected function setUp()
+    protected string | Closure | null $valuePlaceholder = null;
+
+    protected bool | Closure $isReorderable = false;
+
+    protected function setUp(): void
     {
+        parent::setUp();
+
         $this->default([]);
+
+        $this->dehydrateStateUsing(static function (?array $state) {
+            return collect($state ?? [])
+                ->filter(static fn (?string $value, ?string $key): bool => filled($key))
+                ->map(static fn (?string $value): ?string => filled($value) ? $value : null)
+                ->all();
+        });
+
+        $this->addButtonLabel(__('forms::components.key_value.buttons.add.label'));
+
+        $this->deleteButtonLabel(__('forms::components.key_value.buttons.delete.label'));
+
+        $this->keyLabel(__('forms::components.key_value.fields.key.label'));
+
+        $this->valueLabel(__('forms::components.key_value.fields.value.label'));
     }
 
-    public function addButtonLabel($label)
+    public function addButtonLabel(string | Closure | null $label): static
     {
-        $this->configure(function () use ($label) {
-            $this->addButtonLabel = $label;
-        });
+        $this->addButtonLabel = $label;
 
         return $this;
     }
 
-    public function canAddRows()
+    public function deleteButtonLabel(string | Closure | null $label): static
     {
-        return $this->canAddRows;
-    }
-
-    public function canDeleteRows()
-    {
-        return $this->canDeleteRows;
-    }
-
-    public function canEditKeys()
-    {
-        return $this->canEditKeys;
-    }
-
-    public function deleteButtonLabel($label)
-    {
-        $this->configure(function () use ($label) {
-            $this->deleteButtonLabel = $label;
-        });
+        $this->deleteButtonLabel = $label;
 
         return $this;
     }
 
-    public function disableAddingRows($state = true)
+    public function disableAddingRows(bool | Closure $condition = true): static
     {
-        $this->configure(function () use ($state) {
-            $this->canAddRows = ! $state;
-        });
+        $this->shouldDisableAddingRows = $condition;
 
         return $this;
     }
 
-    public function disableDeletingRows($state = true)
+    public function disableDeletingRows(bool | Closure $condition = true): static
     {
-        $this->configure(function () use ($state) {
-            $this->canDeleteRows = ! $state;
-        });
+        $this->shouldDisableDeletingRows = $condition;
 
         return $this;
     }
 
-    public function disableEditingKeys($state = true)
+    public function disableEditingKeys(bool | Closure $condition = true): static
     {
-        $this->configure(function () use ($state) {
-            $this->canEditKeys = ! $state;
-        });
+        $this->shouldDisableEditingKeys = $condition;
 
         return $this;
     }
 
-    public function getAddButtonLabel()
+    public function disableEditingValues(bool | Closure $condition = true): static
     {
-        return $this->addButtonLabel;
-    }
-
-    public function getDeleteButtonLabel()
-    {
-        return $this->deleteButtonLabel;
-    }
-
-    public function getKeyLabel()
-    {
-        return $this->keyLabel;
-    }
-
-    public function getKeyPlaceholder()
-    {
-        return $this->keyPlaceholder;
-    }
-
-    public function getSortButtonLabel()
-    {
-        return $this->sortButtonLabel;
-    }
-
-    public function getValueLabel()
-    {
-        return $this->valueLabel;
-    }
-
-    public function getValuePlaceholder()
-    {
-        return $this->valuePlaceholder;
-    }
-
-    public function isSortable()
-    {
-        return $this->isSortable;
-    }
-
-    public function keyLabel($label)
-    {
-        $this->configure(function () use ($label) {
-            $this->keyLabel = $label;
-        });
+        $this->shouldDisableEditingValues = $condition;
 
         return $this;
     }
 
-    public function keyPlaceholder($placeholder)
+    public function keyLabel(string | Closure | null $label): static
     {
-        $this->configure(function () use ($placeholder) {
-            $this->keyPlaceholder = $placeholder;
-        });
+        $this->keyLabel = $label;
 
         return $this;
     }
 
-    public function sortable($sortable = true)
+    public function valueLabel(string | Closure | null $label): static
     {
-        $this->configure(function () use ($sortable) {
-            $this->isSortable = $sortable;
-        });
+        $this->valueLabel = $label;
 
         return $this;
     }
 
-    public function sortButtonLabel($label)
+    public function keyPlaceholder(string | Closure | null $placeholder): static
     {
-        $this->configure(function () use ($label) {
-            $this->sortButtonLabel = $label;
-        });
+        $this->keyPlaceholder = $placeholder;
 
         return $this;
     }
 
-    public function valueLabel($label)
+    public function valuePlaceholder(string | Closure | null $placeholder): static
     {
-        $this->configure(function () use ($label) {
-            $this->valueLabel = $label;
-        });
+        $this->valuePlaceholder = $placeholder;
 
         return $this;
     }
 
-    public function valuePlaceholder($placeholder)
+    public function reorderable(bool | Closure $condition = true): static
     {
-        $this->configure(function () use ($placeholder) {
-            $this->valuePlaceholder = $placeholder;
-        });
+        $this->isReorderable = $condition;
 
         return $this;
+    }
+
+    public function canAddRows(): bool
+    {
+        return ! $this->evaluate($this->shouldDisableAddingRows);
+    }
+
+    public function canDeleteRows(): bool
+    {
+        return ! $this->evaluate($this->shouldDisableDeletingRows);
+    }
+
+    public function canEditKeys(): bool
+    {
+        return ! $this->evaluate($this->shouldDisableEditingKeys);
+    }
+
+    public function canEditValues(): bool
+    {
+        return ! $this->evaluate($this->shouldDisableEditingValues);
+    }
+
+    public function getAddButtonLabel(): string
+    {
+        return $this->evaluate($this->addButtonLabel);
+    }
+
+    public function getDeleteButtonLabel(): string
+    {
+        return $this->evaluate($this->deleteButtonLabel);
+    }
+
+    public function getKeyLabel(): string
+    {
+        return $this->evaluate($this->keyLabel);
+    }
+
+    public function getValueLabel(): string
+    {
+        return $this->evaluate($this->valueLabel);
+    }
+
+    public function getKeyPlaceholder(): ?string
+    {
+        return $this->evaluate($this->keyPlaceholder);
+    }
+
+    public function getValuePlaceholder(): ?string
+    {
+        return $this->evaluate($this->valuePlaceholder);
+    }
+
+    public function isReorderable(): bool
+    {
+        return $this->evaluate($this->isReorderable);
     }
 }

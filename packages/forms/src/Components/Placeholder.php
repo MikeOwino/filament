@@ -2,61 +2,67 @@
 
 namespace Filament\Forms\Components;
 
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Str;
 
 class Placeholder extends Component
 {
-    protected $name;
+    use Concerns\HasHelperText;
+    use Concerns\HasHint;
+    use Concerns\HasName;
 
-    protected $value;
+    protected string $view = 'forms::components.placeholder';
 
-    public function __construct($name, $value)
+    protected $content = null;
+
+    final public function __construct(string $name)
     {
         $this->name($name);
-        $this->value($value);
-
-        $this->setUp();
+        $this->statePath($name);
     }
 
-    public function getLabel()
+    public static function make(string $name): static
     {
-        if ($this->label === null) {
-            return (string) Str::of($this->getName())
-                ->afterLast('.')
-                ->kebab()
-                ->replace(['-', '_'], ' ')
-                ->ucfirst();
-        }
+        $static = app(static::class, ['name' => $name]);
+        $static->configure();
 
-        return parent::getLabel();
+        return $static;
     }
 
-    public function getName()
+    protected function setUp(): void
     {
-        return $this->name;
+        parent::setUp();
+
+        $this->dehydrated(false);
     }
 
-    public function getValue()
+    public function content($content): static
     {
-        return $this->value;
-    }
-
-    public static function make($name, $value)
-    {
-        return new static($name, $value);
-    }
-
-    protected function name($name)
-    {
-        $this->name = $name;
+        $this->content = $content;
 
         return $this;
     }
 
-    protected function value($value)
+    protected function shouldEvaluateWithState(): bool
     {
-        $this->value = $value;
+        return false;
+    }
 
-        return $this;
+    public function getId(): string
+    {
+        return parent::getId() ?? $this->getStatePath();
+    }
+
+    public function getLabel(): string | Htmlable | null
+    {
+        return parent::getLabel() ?? (string) Str::of($this->getName())
+            ->kebab()
+            ->replace(['-', '_'], ' ')
+            ->ucfirst();
+    }
+
+    public function getContent()
+    {
+        return $this->evaluate($this->content);
     }
 }

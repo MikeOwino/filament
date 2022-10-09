@@ -2,41 +2,83 @@
 
 namespace Filament\Forms\Components\Concerns;
 
+use Closure;
+use Filament\Forms\Components\Contracts;
+use Filament\Forms\Components\Contracts\CanHaveNumericState;
+
 trait CanBeLengthConstrained
 {
-    protected $maxLength;
+    protected int | Closure | null $length = null;
 
-    protected $minLength;
+    protected int | Closure | null $maxLength = null;
 
-    public function getMaxLength()
+    protected int | Closure | null $minLength = null;
+
+    public function length(int | Closure $length): static
     {
-        return $this->maxLength;
-    }
+        $this->length = $length;
+        $this->maxLength = $length;
+        $this->minLength = $length;
 
-    public function getMinLength()
-    {
-        return $this->minLength;
-    }
+        $this->rule(static function (Contracts\CanBeLengthConstrained $component): string {
+            $length = $component->getLength();
 
-    public function maxLength($length)
-    {
-        $this->configure(function () use ($length) {
-            $this->maxLength = $length;
+            if ($component instanceof CanHaveNumericState && $component->isNumeric()) {
+                return "digits:{$length}";
+            }
 
-            $this->addRules([$this->getName() => ["max:{$this->maxLength}"]]);
-        });
+            return "size:{$length}";
+        }, static fn (Contracts\CanBeLengthConstrained $component): bool => filled($component->getLength()));
 
         return $this;
     }
 
-    public function minLength($length)
+    public function maxLength(int | Closure $length): static
     {
-        $this->configure(function () use ($length) {
-            $this->minLength = $length;
+        $this->maxLength = $length;
 
-            $this->addRules([$this->getName() => ["min:{$this->minLength}"]]);
-        });
+        $this->rule(static function (Contracts\CanBeLengthConstrained $component): string {
+            $length = $component->getMaxLength();
+
+            if ($component instanceof Contracts\CanHaveNumericState && $component->isNumeric()) {
+                return "max_digits:{$length}";
+            }
+
+            return "max:{$length}";
+        }, static fn (Contracts\CanBeLengthConstrained $component): bool => filled($component->getMaxLength()));
 
         return $this;
+    }
+
+    public function minLength(int | Closure $length): static
+    {
+        $this->minLength = $length;
+
+        $this->rule(static function (Contracts\CanBeLengthConstrained $component): string {
+            $length = $component->getMinLength();
+
+            if ($component instanceof Contracts\CanHaveNumericState && $component->isNumeric()) {
+                return "min_digits:{$length}";
+            }
+
+            return "min:{$length}";
+        }, static fn (Contracts\CanBeLengthConstrained $component): bool => filled($component->getMinLength()));
+
+        return $this;
+    }
+
+    public function getLength(): ?int
+    {
+        return $this->evaluate($this->length);
+    }
+
+    public function getMaxLength(): ?int
+    {
+        return $this->evaluate($this->maxLength);
+    }
+
+    public function getMinLength(): ?int
+    {
+        return $this->evaluate($this->minLength);
     }
 }

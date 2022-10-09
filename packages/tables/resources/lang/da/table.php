@@ -2,46 +2,73 @@
 
 return [
 
-    'delete' => [
-        'button' => [
-            'label' => 'Slet valgte',
+    'fields' => [
+
+        'search_query' => [
+            'label' => 'Søg',
+            'placeholder' => 'Søg',
         ],
 
-        'modal' => [
-            'buttons' => [
-                'cancel' => [
-                    'label' => 'Annuller',
-                ],
-
-                'delete' => [
-                    'label' => 'Slet valgte',
-                ],
-            ],
-
-            'description' => 'Er du sikker på, at du vil slette de valgte poster? Denne handling kan ikke fortrydes.',
-
-            'heading' => 'Slet de valgte poster?',
-        ],
-    ],
-
-    'filter' => [
-        'placeholder' => 'Filtrer',
-    ],
-
-    'messages' => [
-        'noRecords' => 'Ingen resultater',
     ],
 
     'pagination' => [
+
+        'label' => 'Paginering Navigation',
+
+        'overview' => 'Viser :first til :last af :total resultater',
+
         'fields' => [
-            'recordsPerPage' => [
+
+            'records_per_page' => [
                 'label' => 'per side',
             ],
+
         ],
+
+        'buttons' => [
+
+            'go_to_page' => [
+                'label' => 'Gå til side :page',
+            ],
+
+            'next' => [
+                'label' => 'Næste',
+            ],
+
+            'previous' => [
+                'label' => 'Forrige',
+            ],
+
+        ],
+
     ],
 
-    'search' => [
-        'placeholder' => 'Søg',
+    'buttons' => [
+
+        'filter' => [
+            'label' => 'Filtrer',
+        ],
+
+        'open_actions' => [
+            'label' => 'Åbn handlinger',
+        ],
+
+    ],
+
+    'empty' => [
+        'heading' => 'Ingen resultater',
+    ],
+
+    'selection_indicator' => [
+
+        'buttons' => [
+
+            'select_all' => [
+                'label' => 'Vælg alle :count',
+            ],
+
+        ],
+
     ],
 
 ];

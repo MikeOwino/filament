@@ -1,26 +1,44 @@
-<x-forms::field-group
-    :column-span="$formComponent->getColumnSpan()"
-    :error-key="$formComponent->getName()"
-    :for="$formComponent->getId()"
-    :help-message="$formComponent->getHelpMessage()"
-    :hint="$formComponent->getHint()"
-    :label="$formComponent->getLabel()"
-    :required="$formComponent->isRequired()"
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :id="$getId()"
+    :label="$getLabel()"
+    :label-sr-only="$isLabelHidden()"
+    :helper-text="$getHelperText()"
+    :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
+    :hint-icon="$getHintIcon()"
+    :required="$isRequired()"
+    :state-path="$getStatePath()"
 >
-    @if ($formComponent->isInline())
+    @if ($isInline())
         <x-slot name="labelPrefix">
     @endif
-        <input
-            {!! $formComponent->isAutofocused() ? 'autofocus' : null !!}
-            {!! $formComponent->isDisabled() ? 'disabled' : null !!}
-            {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-            {!! $formComponent->getName() ? "{$formComponent->getBindingAttribute()}=\"{$formComponent->getName()}\"" : null !!}
-            type="checkbox"
-            {!! $formComponent->isRequired() ? 'required' : null !!}
-            class="rounded text-primary-600 shadow-sm focus:border-primary-700 focus:ring focus:ring-blue-200 focus:ring-opacity-50 {{ $errors->has($formComponent->getName()) ? 'border-danger-600 ' : 'border-gray-300' }}"
-            {!! Filament\format_attributes($formComponent->getExtraAttributes()) !!}
-        />
-    @if ($formComponent->isInline())
+            <input
+                {!! $isAutofocused() ? 'autofocus' : null !!}
+                {!! $isDisabled() ? 'disabled' : null !!}
+                wire:loading.attr="disabled"
+                id="{{ $getId() }}"
+                type="checkbox"
+                {{ $applyStateBindingModifiers('wire:model') }}="{{ $getStatePath() }}"
+                dusk="filament.forms.{{ $getStatePath() }}"
+                @if (! $isConcealed())
+                    {!! $isRequired() ? 'required' : null !!}
+                @endif
+                {{
+                    $attributes
+                        ->merge($getExtraAttributes())
+                        ->merge($getExtraInputAttributeBag()->getAttributes())
+                        ->class([
+                            'filament-forms-checkbox-component text-primary-600 transition duration-75 rounded shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 disabled:opacity-70',
+                            'dark:bg-gray-700 dark:checked:bg-primary-500' => config('forms.dark_mode'),
+                            'border-gray-300' => ! $errors->has($getStatePath()),
+                            'dark:border-gray-600' => (! $errors->has($getStatePath())) && config('forms.dark_mode'),
+                            'border-danger-300 ring-danger-500' => $errors->has($getStatePath()),
+                        ])
+                }}
+            />
+    @if ($isInline())
         </x-slot>
     @endif
-</x-forms::field-group>
+</x-dynamic-component>

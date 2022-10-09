@@ -2,56 +2,115 @@
 
 return [
 
-    'delete' => [
+    'fields' => [
 
-        'button' => [
-            'label' => 'Radera valda',
+        'search_query' => [
+            'label' => 'Sök',
+            'placeholder' => 'Sök',
         ],
 
-        'modal' => [
-
-            'buttons' => [
-
-                'cancel' => [
-                    'label' => 'Ångra',
-                ],
-
-                'delete' => [
-                    'label' => 'Radera valda',
-                ],
-
-            ],
-
-            'description' => 'Är du säker på att du vill radera de valda raderna? Det går inte att ångra!',
-
-            'heading' => 'Radera de valda raderna?',
-
-        ],
-
-    ],
-
-    'filter' => [
-        'placeholder' => 'Filter',
-    ],
-
-    'messages' => [
-        'noRecords' => 'Finns inga rader',
     ],
 
     'pagination' => [
 
+        'label' => 'Meny för sidnumerering',
+
+        'overview' => 'Visar :first till :last av :total resultat',
+
         'fields' => [
 
-            'recordsPerPage' => [
+            'records_per_page' => [
                 'label' => 'per sida',
             ],
 
         ],
 
+        'buttons' => [
+
+            'go_to_page' => [
+                'label' => 'Gå till sida :page',
+            ],
+
+            'next' => [
+                'label' => 'Nästa',
+            ],
+
+            'previous' => [
+                'label' => 'Föregående',
+            ],
+
+        ],
+
     ],
 
-    'search' => [
-        'placeholder' => 'Sök',
+    'buttons' => [
+
+        'filter' => [
+            'label' => 'Filter',
+        ],
+
+        'open_actions' => [
+            'label' => 'Öppna åtgärder',
+        ],
+
+        'toggle_columns' => [
+            'label' => 'Växla kolumner',
+        ],
+
+    ],
+
+    'empty' => [
+        'heading' => 'Inga rader hittades',
+    ],
+
+    'filters' => [
+
+        'buttons' => [
+
+            'reset' => [
+                'label' => 'Återställ filter',
+            ],
+
+        ],
+
+        'multi_select' => [
+            'placeholder' => 'Alla',
+        ],
+
+        'select' => [
+            'placeholder' => 'Alla',
+        ],
+
+        'trashed' => [
+
+            'label' => 'Raderade rader',
+
+            'only_trashed' => 'Endast raderade rader',
+
+            'with_trashed' => 'Med raderade rader',
+
+            'without_trashed' => 'Utan raderade rader',
+
+        ],
+
+    ],
+
+    'selection_indicator' => [
+
+        'selected_count' => '1 rad vald.|:count rader valda.',
+
+        'buttons' => [
+
+            'select_all' => [
+                'label' => 'Välj alla :count',
+            ],
+
+            'deselect_all' => [
+                'label' => 'Avmarkera alla',
+            ],
+
+        ],
+
     ],
 
 ];

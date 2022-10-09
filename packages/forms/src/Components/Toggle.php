@@ -2,57 +2,28 @@
 
 namespace Filament\Forms\Components;
 
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
+
 class Toggle extends Field
 {
-    use Concerns\CanBeAutofocused;
+    use Concerns\CanBeAccepted;
     use Concerns\CanBeInline;
+    use Concerns\HasToggleColors;
+    use Concerns\HasToggleIcons;
+    use HasExtraAlpineAttributes;
 
-    protected $offIcon;
+    protected string $view = 'forms::components.toggle';
 
-    protected $onIcon;
-
-    protected function setUp()
+    protected function setUp(): void
     {
+        parent::setUp();
+
         $this->default(false);
 
-        $this->inline();
-    }
-
-    public function getOffIcon()
-    {
-        return $this->offIcon;
-    }
-
-    public function getOnIcon()
-    {
-        return $this->onIcon;
-    }
-
-    public function hasOffIcon()
-    {
-        return $this->offIcon !== null;
-    }
-
-    public function hasOnIcon()
-    {
-        return $this->onIcon !== null;
-    }
-
-    public function offIcon($icon)
-    {
-        $this->configure(function () use ($icon) {
-            $this->offIcon = $icon;
+        $this->afterStateHydrated(static function (Toggle $component, $state): void {
+            $component->state((bool) $state);
         });
 
-        return $this;
-    }
-
-    public function onIcon($icon)
-    {
-        $this->configure(function () use ($icon) {
-            $this->onIcon = $icon;
-        });
-
-        return $this;
+        $this->rule('boolean');
     }
 }

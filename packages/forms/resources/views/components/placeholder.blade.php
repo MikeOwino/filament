@@ -1,14 +1,16 @@
-<x-forms::field-group
-    :column-span="$formComponent->getColumnSpan()"
-    :error-key="$formComponent->getName()"
-    :for="$formComponent->getId()"
-    :label="$formComponent->getLabel()"
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :id="$getId()"
+    :label="$getLabel()"
+    :label-sr-only="$isLabelHidden()"
+    :helper-text="$getHelperText()"
+    :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
+    :hint-icon="$getHintIcon()"
+    :state-path="$getStatePath()"
 >
-    <div class="flex">
-        <span
-            class="block w-full placeholder-gray-400 placeholder-opacity-100 px-3 py-2 cursor-default"
-        >
-            {{ $formComponent->getValue() }}
-        </span>
+    <div {{ $attributes->merge($getExtraAttributes())->class(['filament-forms-placeholder-component']) }}>
+        {{ $getContent() }}
     </div>
-</x-forms::field-group>
+</x-dynamic-component>

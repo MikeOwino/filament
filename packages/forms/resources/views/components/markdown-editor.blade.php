@@ -1,265 +1,174 @@
-@pushonce('filament-styles:markdown-editor-component')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdhl@0.0.6/mdhl.css">
-
-    <style>
-        [x-data^="markdownEditor"] textarea {
-            caret-color: black;
-            color: transparent;
-        }
-
-        [x-ref="overlay"] {
-            padding: 8px 12px;
-        }
-    </style>
-@endpushonce
-
-@pushonce('filament-scripts:markdown-editor-component')
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@github/markdown-toolbar-element@1.4.0/dist/index.min.js"></script>
-    <script type="module" src="https://unpkg.com/@github/file-attachment-element@1.x/dist/index.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mdhl@0.0.6/dist/mdhl.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <script>
-        function markdownEditor(config) {
-            return {
-                attachmentDirectory: config.attachmentDirectory,
-
-                attachmentDisk: config.attachmentDisk,
-
-                attachmentUploadUrl: config.attachmentUploadUrl,
-
-                overlay: null,
-
-                preview: '',
-
-                tab: config.tab,
-
-                value: '',
-
-                checkForAutoInsertion($event) {
-                    const lines = this.$refs.textarea.value.split("\n")
-
-                    const currentLine = this.$refs.textarea.value.substring(
-                        0, this.$refs.textarea.value.selectionStart
-                    ).split("\n").length
-
-                    const previousLine = lines[currentLine - 2]
-
-                    if (! previousLine.match(/^(\*\s|-\s)|^(\d)+\./)) {
-                        return;
-                    }
-
-                    if (previousLine.match(/^(\*\s)/)) {
-                        if (previousLine.trim().length > 1) {
-                            lines[currentLine - 1] = '* '
-                        } else {
-                            delete lines[currentLine - 2]
-                        }
-                    } else if (previousLine.match(/^(-\s)/)) {
-                        if (previousLine.trim().length > 1) {
-                            lines[currentLine - 1] = '- '
-                        } else {
-                            delete lines[currentLine - 2]
-                        }
-                    } else {
-                        const matches = previousLine.match(/^(\d)+/)
-                        const number = matches[0]
-
-                        if (previousLine.trim().length > (number.length + 2)) {
-                            lines[currentLine - 1] = `${parseInt(number) + 1}. `
-                        } else {
-                            delete lines[currentLine - 2]
-                        }
-                    }
-
-                    this.$refs.textarea.value = lines.join("\n")
-
-                    this.resize()
-                },
-
-                init: function () {
-                    this.resize()
-
-                    this.$watch('tab', () => {
-                        if (this.tab !== 'preview') return
-
-                        this.preview = marked(this.value)
-                    })
-                },
-
-                resize: function () {
-                    this.$refs.overlay.style.height = '150px'
-                    this.$refs.overlay.style.height = this.$refs.textarea.scrollHeight + 'px'
-
-                    this.overlay = mdhl.highlight(this.value = this.$refs.textarea.value)
-                },
-
-                uploadAttachments: function ($event) {
-                    const attachment = $event.detail?.attachments?.[0]
-
-                    if (! attachment || ! attachment.file) return
-
-                    let formData = new FormData()
-
-                    formData.append('directory', this.attachmentDirectory)
-                    formData.append('disk', this.attachmentDisk)
-                    formData.append('file', attachment.file)
-
-                    fetch(this.attachmentUploadUrl, {
-                        body: formData,
-                        credentials: 'same-origin',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        method: 'POST',
-                    })
-                    .then(response => response.text())
-                    .then(url => {
-                        this.$refs.imageTrigger.click()
-
-                        const urlStart = this.$refs.textarea.selectionStart + 2
-                        const urlEnd = urlStart + 3
-
-                        this.$refs.textarea.value = [
-                            this.$refs.textarea.value.substring(0, urlStart),
-                            url,
-                            this.$refs.textarea.value.substring(urlEnd)
-                        ].join('')
-
-                        this.$refs.textarea.selectionStart = urlStart - 2
-                        this.$refs.textarea.selectionEnd = urlStart - 2
-
-                        this.resize()
-                    })
-                },
-            }
-        }
-    </script>
-@endpushonce
-
-<x-forms::field-group
-    :column-span="$formComponent->getColumnSpan()"
-    :error-key="$formComponent->getName()"
-    :for="$formComponent->getId()"
-    :help-message="$formComponent->getHelpMessage()"
-    :hint="$formComponent->getHint()"
-    :label="$formComponent->getLabel()"
-    :required="$formComponent->isRequired()"
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :id="$getId()"
+    :label="$getLabel()"
+    :label-sr-only="$isLabelHidden()"
+    :helper-text="$getHelperText()"
+    :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
+    :hint-icon="$getHintIcon()"
+    :required="$isRequired()"
+    :state-path="$getStatePath()"
 >
     <div
-        x-data="markdownEditor({
-            attachmentDirectory: {{ json_encode($formComponent->getAttachmentDirectory()) }},
-            attachmentDisk: {{ json_encode($formComponent->getAttachmentDiskName()) }},
-            attachmentUploadUrl: {{ json_encode($formComponent->getAttachmentUploadUrl()) }},
-            tab: '{{ $formComponent->isDisabled() ? 'preview' : 'write' }}',
+        x-data="markdownEditorFormComponent({
+            state: $wire.{{ $applyStateBindingModifiers('entangle(\'' . $getStatePath() . '\')') }},
+            tab: '{{ $isDisabled() ? 'preview' : 'edit' }}',
         })"
-        x-init="init"
         wire:ignore
+        {{ $attributes->merge($getExtraAttributes())->class(['filament-forms-markdown-editor-component']) }}
+        {{ $getExtraAlpineAttributeBag() }}
     >
         <div class="space-y-2">
-            @unless ($formComponent->isDisabled())
-                <div class="flex items-stretch h-8" x-bind:class="{ 'justify-end': tab === 'preview', 'justify-between': tab !== 'preview' }">
+            @unless ($isDisabled())
+                <div class="flex justify-between space-x-4 rtl:space-x-reverse overflow-x-auto items-stretch overflow-y-hidden">
                     <markdown-toolbar
-                        for="{{ $formComponent->getId() }}"
-                        class="flex items-stretch space-x-4 rtl:space-x-reverse"
-                        x-show="tab !== 'preview'"
+                        for="{{ $getId() }}"
+                        x-bind:class="{ 'pointer-events-none opacity-70': tab === 'preview' }"
+                        class="flex items-stretch space-x-4 rtl:space-x-reverse focus:outline-none"
                     >
-                        @if ($formComponent->hasToolbarButton(['bold', 'italic', 'strike']))
+                        @if ($hasToolbarButton(['bold', 'italic', 'strike', 'link']))
                             <div class="flex items-stretch space-x-1 rtl:space-x-reverse">
-                                @if ($formComponent->hasToolbarButton('bold'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.bold') }}">
+                                @if ($hasToolbarButton('bold'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.bold') }}"
+                                    >
                                         <md-bold>
-                                            <svg class="w-4" viewBox="0 0 16 16" version="1.1" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a1 1 0 00-1 1v10a1 1 0 001 1h5.5a3.5 3.5 0 001.852-6.47A3.5 3.5 0 008.5 2H4zm4.5 5a1.5 1.5 0 100-3H5v3h3.5zM5 9v3h4.5a1.5 1.5 0 000-3H5z"></path></svg>
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="bold" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M321.1 242.4C340.1 220.1 352 191.6 352 160c0-70.59-57.42-128-128-128L32 32.01c-17.67 0-32 14.31-32 32s14.33 32 32 32h16v320H32c-17.67 0-32 14.31-32 32s14.33 32 32 32h224c70.58 0 128-57.41 128-128C384 305.3 358.6 264.8 321.1 242.4zM112 96.01H224c35.3 0 64 28.72 64 64s-28.7 64-64 64H112V96.01zM256 416H112v-128H256c35.3 0 64 28.71 64 63.1S291.3 416 256 416z"></path></svg>
                                         </md-bold>
-                                    </x-filament::button>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
 
-                                @if ($formComponent->hasToolbarButton('italic'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.italic') }}">
+                                @if ($hasToolbarButton('italic'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.italic') }}"
+                                    >
                                         <md-italic>
-                                            <svg class="w-4" height="16" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true"><path fill-rule="evenodd" d="M6 2.75A.75.75 0 016.75 2h6.5a.75.75 0 010 1.5h-2.505l-3.858 9H9.25a.75.75 0 010 1.5h-6.5a.75.75 0 010-1.5h2.505l3.858-9H6.75A.75.75 0 016 2.75z"></path></svg>
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="italic" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M384 64.01c0 17.69-14.31 32-32 32h-58.67l-133.3 320H224c17.69 0 32 14.31 32 32s-14.31 32-32 32H32c-17.69 0-32-14.31-32-32s14.31-32 32-32h58.67l133.3-320H160c-17.69 0-32-14.31-32-32s14.31-32 32-32h192C369.7 32.01 384 46.33 384 64.01z"></path></svg>
                                         </md-italic>
-                                    </x-filament::button>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
 
-                                @if ($formComponent->hasToolbarButton('strike'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.strike') }}">
+                                @if ($hasToolbarButton('strike'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.strike') }}"
+                                    >
                                         <md-strikethrough>
-                                            <svg class="w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M7.581 3.25c-2.036 0-2.778 1.082-2.778 1.786 0 .055.002.107.006.157a.75.75 0 01-1.496.114 3.56 3.56 0 01-.01-.271c0-1.832 1.75-3.286 4.278-3.286 1.418 0 2.721.58 3.514 1.093a.75.75 0 11-.814 1.26c-.64-.414-1.662-.853-2.7-.853zm3.474 5.25h3.195a.75.75 0 000-1.5H1.75a.75.75 0 000 1.5h6.018c.835.187 1.503.464 1.951.81.439.34.647.725.647 1.197 0 .428-.159.895-.594 1.267-.444.38-1.254.726-2.676.726-1.373 0-2.38-.493-2.86-.956a.75.75 0 00-1.042 1.079C3.992 13.393 5.39 14 7.096 14c1.652 0 2.852-.403 3.65-1.085a3.134 3.134 0 001.12-2.408 2.85 2.85 0 00-.811-2.007z"></path></svg>
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="strikethrough" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M332.2 319.9c17.22 12.17 22.33 26.51 18.61 48.21c-3.031 17.59-10.88 29.34-24.72 36.99c-35.44 19.75-108.5 11.96-186-19.68c-16.34-6.686-35.03 1.156-41.72 17.53s1.188 35.05 17.53 41.71c31.75 12.93 95.69 35.37 157.6 35.37c29.62 0 58.81-5.156 83.72-18.96c30.81-17.09 50.44-45.46 56.72-82.11c3.998-23.27 2.168-42.58-3.488-59.05H332.2zM488 239.9l-176.5-.0309c-15.85-5.613-31.83-10.34-46.7-14.62c-85.47-24.62-110.9-39.05-103.7-81.33c2.5-14.53 10.16-25.96 22.72-34.03c20.47-13.15 64.06-23.84 155.4 .3438c17.09 4.531 34.59-5.654 39.13-22.74c4.531-17.09-5.656-34.59-22.75-39.12c-91.31-24.18-160.7-21.62-206.3 7.654C121.8 73.72 103.6 101.1 98.09 133.1C89.26 184.5 107.9 217.3 137.2 239.9L24 239.9c-13.25 0-24 10.75-24 23.1c0 13.25 10.75 23.1 24 23.1h464c13.25 0 24-10.75 24-23.1C512 250.7 501.3 239.9 488 239.9z"></path></svg>
                                         </md-strikethrough>
-                                    </x-filament::button>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
-                            </div>
-                        @endif
 
-                        @if ($formComponent->hasToolbarButton(['link', 'attachFiles', 'code']))
-                            <div class="flex items-stretch space-x-1 rtl:space-x-reverse">
-                                @if ($formComponent->hasToolbarButton('link'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.link') }}">
+                                @if ($hasToolbarButton('link'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.link') }}"
+                                    >
                                         <md-link class="w-full h-full">
-                                            <x-heroicon-o-link class="w-4" />
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="link" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="M598.6 41.41C570.1 13.8 534.8 0 498.6 0s-72.36 13.8-99.96 41.41l-43.36 43.36c15.11 8.012 29.47 17.58 41.91 30.02c3.146 3.146 5.898 6.518 8.742 9.838l37.96-37.96C458.5 72.05 477.1 64 498.6 64c20.67 0 40.1 8.047 54.71 22.66c14.61 14.61 22.66 34.04 22.66 54.71s-8.049 40.1-22.66 54.71l-133.3 133.3C405.5 343.1 386 352 365.4 352s-40.1-8.048-54.71-22.66C296 314.7 287.1 295.3 287.1 274.6s8.047-40.1 22.66-54.71L314.2 216.4C312.1 212.5 309.9 208.5 306.7 205.3C298.1 196.7 286.8 192 274.6 192c-11.93 0-23.1 4.664-31.61 12.97c-30.71 53.96-23.63 123.6 22.39 169.6C293 402.2 329.2 416 365.4 416c36.18 0 72.36-13.8 99.96-41.41L598.6 241.3c28.45-28.45 42.24-66.01 41.37-103.3C639.1 102.1 625.4 68.16 598.6 41.41zM234 387.4L196.1 425.3C181.5 439.1 162 448 141.4 448c-20.67 0-40.1-8.047-54.71-22.66c-14.61-14.61-22.66-34.04-22.66-54.71s8.049-40.1 22.66-54.71l133.3-133.3C234.5 168 253.1 160 274.6 160s40.1 8.048 54.71 22.66c14.62 14.61 22.66 34.04 22.66 54.71s-8.047 40.1-22.66 54.71L325.8 295.6c2.094 3.939 4.219 7.895 7.465 11.15C341.9 315.3 353.3 320 365.4 320c11.93 0 23.1-4.664 31.61-12.97c30.71-53.96 23.63-123.6-22.39-169.6C346.1 109.8 310.8 96 274.6 96C238.4 96 202.3 109.8 174.7 137.4L41.41 270.7c-27.6 27.6-41.41 63.78-41.41 99.96c-.0001 36.18 13.8 72.36 41.41 99.97C69.01 498.2 105.2 512 141.4 512c36.18 0 72.36-13.8 99.96-41.41l43.36-43.36c-15.11-8.012-29.47-17.58-41.91-30.02C239.6 394.1 236.9 390.7 234 387.4z"></path></svg>
                                         </md-link>
-                                    </x-filament::button>
-                                @endif
-
-                                @if ($formComponent->hasToolbarButton('attachFiles'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.attachFiles') }}">
-                                        <md-image class="w-full h-full" x-ref="imageTrigger">
-                                            <x-heroicon-o-photograph class="w-4" />
-                                        </md-image>
-                                    </x-filament::button>
-                                @endif
-
-                                @if ($formComponent->hasToolbarButton('code'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.code') }}">
-                                        <md-code class="w-full h-full">
-                                            <x-heroicon-o-code class="w-4" />
-                                        </md-code>
-                                    </x-filament::button>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
                             </div>
                         @endif
 
-                        @if ($formComponent->hasToolbarButton(['bullet', 'number']))
+                        @if ($hasToolbarButton(['codeBlock', 'bulletList', 'orderedList']))
                             <div class="flex items-stretch space-x-1 rtl:space-x-reverse">
-                                @if ($formComponent->hasToolbarButton('bullet'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.bullet') }}">
-                                        <md-unordered-list class="w-full h-full">
-                                            <svg height="16" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true"><path fill-rule="evenodd" d="M2 4a1 1 0 100-2 1 1 0 000 2zm3.75-1.5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zm0 5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zm0 5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zM3 8a1 1 0 11-2 0 1 1 0 012 0zm-1 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
-                                        </md-unordered-list>
-                                    </x-filament::button>
+                                @if ($hasToolbarButton('codeBlock'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.code_block') }}"
+                                    >
+                                        <md-code class="w-full h-full">
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="code" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="M416 31.94C416 21.75 408.1 0 384.1 0c-13.98 0-26.87 9.072-30.89 23.18l-128 448c-.8404 2.935-1.241 5.892-1.241 8.801C223.1 490.3 232 512 256 512c13.92 0 26.73-9.157 30.75-23.22l128-448C415.6 37.81 416 34.85 416 31.94zM176 143.1c0-18.28-14.95-32-32-32c-8.188 0-16.38 3.125-22.62 9.376l-112 112C3.125 239.6 0 247.8 0 255.1S3.125 272.4 9.375 278.6l112 112C127.6 396.9 135.8 399.1 144 399.1c17.05 0 32-13.73 32-32c0-8.188-3.125-16.38-9.375-22.63L77.25 255.1l89.38-89.38C172.9 160.3 176 152.2 176 143.1zM640 255.1c0-8.188-3.125-16.38-9.375-22.63l-112-112C512.4 115.1 504.2 111.1 496 111.1c-17.05 0-32 13.73-32 32c0 8.188 3.125 16.38 9.375 22.63l89.38 89.38l-89.38 89.38C467.1 351.6 464 359.8 464 367.1c0 18.28 14.95 32 32 32c8.188 0 16.38-3.125 22.62-9.376l112-112C636.9 272.4 640 264.2 640 255.1z"></path></svg>
+                                        </md-code>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
 
-                                @if ($formComponent->hasToolbarButton('number'))
-                                    <x-filament::button size="small" class="text-base" title="{{ __('forms::fields.markdownEditor.toolbarButtons.number') }}">
+                                @if ($hasToolbarButton('bulletList'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.bullet_list') }}"
+                                    >
+                                        <md-unordered-list class="w-full h-full">
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="list-ul" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M16 96C16 69.49 37.49 48 64 48C90.51 48 112 69.49 112 96C112 122.5 90.51 144 64 144C37.49 144 16 122.5 16 96zM480 64C497.7 64 512 78.33 512 96C512 113.7 497.7 128 480 128H192C174.3 128 160 113.7 160 96C160 78.33 174.3 64 192 64H480zM480 224C497.7 224 512 238.3 512 256C512 273.7 497.7 288 480 288H192C174.3 288 160 273.7 160 256C160 238.3 174.3 224 192 224H480zM480 384C497.7 384 512 398.3 512 416C512 433.7 497.7 448 480 448H192C174.3 448 160 433.7 160 416C160 398.3 174.3 384 192 384H480zM16 416C16 389.5 37.49 368 64 368C90.51 368 112 389.5 112 416C112 442.5 90.51 464 64 464C37.49 464 16 442.5 16 416zM112 256C112 282.5 90.51 304 64 304C37.49 304 16 282.5 16 256C16 229.5 37.49 208 64 208C90.51 208 112 229.5 112 256z"></path></svg>
+                                        </md-unordered-list>
+                                    </x-forms::markdown-editor.toolbar-button>
+                                @endif
+
+                                @if ($hasToolbarButton('orderedList'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.ordered_list') }}"
+                                    >
                                         <md-ordered-list class="w-full h-full">
-                                            <svg height="16" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true"><path fill-rule="evenodd" d="M2.003 2.5a.5.5 0 00-.723-.447l-1.003.5a.5.5 0 00.446.895l.28-.14V6H.5a.5.5 0 000 1h2.006a.5.5 0 100-1h-.503V2.5zM5 3.25a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 015 3.25zm0 5a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 015 8.25zm0 5a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5a.75.75 0 01-.75-.75zM.924 10.32l.003-.004a.851.851 0 01.144-.153A.66.66 0 011.5 10c.195 0 .306.068.374.146a.57.57 0 01.128.376c0 .453-.269.682-.8 1.078l-.035.025C.692 11.98 0 12.495 0 13.5a.5.5 0 00.5.5h2.003a.5.5 0 000-1H1.146c.132-.197.351-.372.654-.597l.047-.035c.47-.35 1.156-.858 1.156-1.845 0-.365-.118-.744-.377-1.038-.268-.303-.658-.484-1.126-.484-.48 0-.84.202-1.068.392a1.858 1.858 0 00-.348.384l-.007.011-.002.004-.001.002-.001.001a.5.5 0 00.851.525zM.5 10.055l-.427-.26.427.26z"></path></svg>
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="list-ol" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path fill="currentColor" d="M55.1 56.04C55.1 42.78 66.74 32.04 79.1 32.04H111.1C125.3 32.04 135.1 42.78 135.1 56.04V176H151.1C165.3 176 175.1 186.8 175.1 200C175.1 213.3 165.3 224 151.1 224H71.1C58.74 224 47.1 213.3 47.1 200C47.1 186.8 58.74 176 71.1 176H87.1V80.04H79.1C66.74 80.04 55.1 69.29 55.1 56.04V56.04zM118.7 341.2C112.1 333.8 100.4 334.3 94.65 342.4L83.53 357.9C75.83 368.7 60.84 371.2 50.05 363.5C39.26 355.8 36.77 340.8 44.47 330.1L55.59 314.5C79.33 281.2 127.9 278.8 154.8 309.6C176.1 333.1 175.6 370.5 153.7 394.3L118.8 432H152C165.3 432 176 442.7 176 456C176 469.3 165.3 480 152 480H64C54.47 480 45.84 474.4 42.02 465.6C38.19 456.9 39.9 446.7 46.36 439.7L118.4 361.7C123.7 355.9 123.8 347.1 118.7 341.2L118.7 341.2zM512 64C529.7 64 544 78.33 544 96C544 113.7 529.7 128 512 128H256C238.3 128 224 113.7 224 96C224 78.33 238.3 64 256 64H512zM512 224C529.7 224 544 238.3 544 256C544 273.7 529.7 288 512 288H256C238.3 288 224 273.7 224 256C224 238.3 238.3 224 256 224H512zM512 384C529.7 384 544 398.3 544 416C544 433.7 529.7 448 512 448H256C238.3 448 224 433.7 224 416C224 398.3 238.3 384 256 384H512z"></path></svg>
                                         </md-ordered-list>
-                                    </x-filament::button>
+                                    </x-forms::markdown-editor.toolbar-button>
+                                @endif
+                            </div>
+                        @endif
+
+                        @if ($hasToolbarButton(['attachFiles']))
+                            <div class="flex items-stretch space-x-1 rtl:space-x-reverse">
+                                @if ($hasToolbarButton('attachFiles'))
+                                    <x-forms::markdown-editor.toolbar-button
+                                        title="{{ __('forms::components.markdown_editor.toolbar_buttons.attach_files') }}"
+                                    >
+                                        <md-image class="w-full h-full" x-ref="imageTrigger">
+                                            <svg @class([
+                                                'h-4',
+                                                'dark:fill-current' => config('forms.dark_mode'),
+                                            ]) aria-hidden="true" focusable="false" data-prefix="fas" data-icon="image" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M447.1 32h-484C28.64 32-.0091 60.65-.0091 96v320c0 35.35 28.65 64 63.1 64h384c35.35 0 64-28.65 64-64V96C511.1 60.65 483.3 32 447.1 32zM111.1 96c26.51 0 48 21.49 48 48S138.5 192 111.1 192s-48-21.49-48-48S85.48 96 111.1 96zM446.1 407.6C443.3 412.8 437.9 416 432 416H82.01c-6.021 0-11.53-3.379-14.26-8.75c-2.73-5.367-2.215-11.81 1.334-16.68l70-96C142.1 290.4 146.9 288 152 288s9.916 2.441 12.93 6.574l32.46 44.51l93.3-139.1C293.7 194.7 298.7 192 304 192s10.35 2.672 13.31 7.125l128 192C448.6 396 448.9 402.3 446.1 407.6z"></path></svg>
+                                        </md-image>
+                                    </x-forms::markdown-editor.toolbar-button>
                                 @endif
                             </div>
                         @endif
                     </markdown-toolbar>
 
-                    @if ($formComponent->hasToolbarButton(['write', 'preview']) && ! $formComponent->isDisabled())
+                    @if ($hasToolbarButton(['edit', 'preview']) && $isEnabled())
                         <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                            @if ($formComponent->hasToolbarButton('write'))
+                            @if ($hasToolbarButton('edit'))
                                 <button
-                                    class="font-mono text-sm hover:underline"
-                                    x-on:click.prevent="tab = 'write'"
-                                    x-bind:class="{ 'text-gray-400': tab !== 'write' }"
+                                    type="button"
+                                    x-on:click.prevent="tab = 'edit'"
+                                    x-bind:class="{ 'text-gray-400 @if (config('forms.dark_mode')) dark:text-gray-400 @endif': tab !== 'edit' }"
+                                    class="text-sm hover:underline"
                                 >
-                                    {{ __('forms::fields.markdownEditor.toolbarButtons.write') }}
+                                    {{ __('forms::components.markdown_editor.toolbar_buttons.edit') }}
                                 </button>
                             @endif
 
-                            @if ($formComponent->hasToolbarButton('preview'))
+                            @if ($hasToolbarButton('preview'))
                                 <button
-                                    class="font-mono text-sm hover:underline"
+                                    type="button"
                                     x-on:click.prevent="tab = 'preview'"
-                                    x-bind:class="{ 'text-gray-400': tab !== 'preview' }"
+                                    x-bind:class="{ 'text-gray-400 @if (config('forms.dark_mode')) dark:text-gray-400 @endif': tab !== 'preview' }"
+                                    @class([
+                                        'text-sm hover:underline',
+                                        'text-gray-400' . (config('forms.dark_mode') ? ' dark:text-gray-400' : null),
+                                    ])
                                 >
-                                    {{ __('forms::fields.markdownEditor.toolbarButtons.preview') }}
+                                    {{ __('forms::components.markdown_editor.toolbar_buttons.preview') }}
                                 </button>
                             @endif
                         </div>
@@ -267,32 +176,73 @@
                 </div>
             @endunless
 
-            <div x-show="tab === 'write'" class="relative w-full h-full" style="min-height: 150px;">
+            <div x-show="tab === 'edit'" class="relative w-full h-full" style="min-height: 150px;">
                 <file-attachment directory>
                     <textarea
-                        {!! $formComponent->isAutofocused() ? 'autofocus' : null !!}
-                        {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-                        {!! $formComponent->getName() ? "{$formComponent->getBindingAttribute()}=\"{$formComponent->getName()}\"" : null !!}
-                        {!! $formComponent->getPlaceholder() ? "placeholder=\"{$formComponent->getPlaceholder()}\"" : null !!}
-                        {!! $formComponent->isRequired() ? 'required' : null !!}
-                        x-on:input="resize"
+                        {!! $isAutofocused() ? 'autofocus' : null !!}
+                        id="{{ $getId() }}"
+                        {!! ($placeholder = $getPlaceholder()) ? "placeholder=\"{$placeholder}\"" : null !!}
+                        x-model="state"
+                        dusk="filament.forms.{{ $getStatePath() }}"
                         x-on:keyup.enter="checkForAutoInsertion"
-                        x-on:file-attachment-accepted.window="uploadAttachments"
+                        x-on:file-attachment-accepted.window="
+                            attachment = $event.detail?.attachments?.[0]
+
+                            if (! attachment || ! attachment.file) return
+
+                            $wire.upload(`componentFileAttachments.{{ $getStatePath() }}`, attachment.file, () => {
+                                $wire.getComponentFileAttachmentUrl('{{ $getStatePath() }}').then((url) => {
+                                    if (! url) {
+                                        return
+                                    }
+
+                                    $refs.imageTrigger.click()
+
+                                    const urlStart = $refs.textarea.selectionStart + 2
+                                    const urlEnd = urlStart + 3
+
+                                    state = [
+                                        $refs.textarea.value.substring(0, urlStart),
+                                        url,
+                                        $refs.textarea.value.substring(urlEnd)
+                                    ].join('')
+
+                                    $refs.textarea.selectionStart = urlStart - 2
+                                    $refs.textarea.selectionEnd = urlStart - 2
+
+                                    render()
+                                })
+                            })
+                        "
                         x-ref="textarea"
-                        class="tracking-normal whitespace-pre-wrap overflow-y-hidden font-mono text-sm absolute bg-transparent top-0 left-0 block z-1 w-full h-full min-h-full rounded resize-none shadow-sm placeholder-gray-400 focus:placeholder-gray-500 placeholder-opacity-100 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 {{ $errors->has($formComponent->getName()) ? 'border-danger-600 motion-safe:animate-shake' : 'border-gray-300' }}"
+                        @if (! $isConcealed())
+                            {!! $isRequired() ? 'required' : null !!}
+                        @endif
+                        class="tracking-normal overflow-y-hidden font-mono block absolute bg-transparent top-0 text-sm left-0 z-1 w-full h-full min-h-full resize-none transition duration-75 rounded-lg shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 caret-black whitespace-pre-wrap rtl:whitespace-normal"
+                        x-bind:class="{
+                            'dark:caret-white dark:focus:border-primary-500': @js(config('forms.dark_mode')),
+                            'border-gray-300': ! (@js($getStatePath()) in $wire.__instance.serverMemo.errors),
+                            'dark:border-gray-600': ! (@js($getStatePath()) in $wire.__instance.serverMemo.errors) && @js(config('forms.dark_mode')),
+                            'border-danger-600 ring-1 ring-inset ring-danger-600': @js($getStatePath()) in $wire.__instance.serverMemo.errors,
+                        }"
                     ></textarea>
                 </file-attachment>
 
                 <div
-                    class="w-full h-full border border-transparent font-mono text-sm tracking-normal text-black break-words whitespace-pre-wrap"
                     x-ref="overlay"
                     x-html="overlay"
+                    style="min-height: 150px;"
+                    @class([
+                        'w-full h-full rounded-lg px-3 py-2 border border-transparent font-mono tracking-normal bg-white text-sm text-gray-900 break-words whitespace-pre-wrap rtl:whitespace-normal',
+                        'dark:bg-gray-700 dark:border-gray-600 dark:text-white' => config('forms.dark_mode'),
+                    ])
                 ></div>
             </div>
 
-            <div class="block w-full h-full min-h-full px-6 py-4 border border-gray-300 rounded shadow-sm focus:border-blue-300" x-show="tab === 'preview'" style="min-height: 150px;">
-                <div class="prose" x-html="preview"></div>
-            </div>
+            <div @class([
+                'prose max-w-none block w-full h-full min-h-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm break-words focus:border-primary-300',
+                'dark:prose-invert dark:border-gray-600 dark:bg-gray-700' => config('forms.dark_mode'),
+            ]) x-show="tab === 'preview'" x-html="preview" x-cloak style="min-height: 150px;"></div>
         </div>
     </div>
-</x-forms::field-group>
+</x-dynamic-component>

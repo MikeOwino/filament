@@ -1,1 +1,3 @@
-<x-forms::form :schema="$formComponent->getSchema()" />
+<div {{ $attributes->merge($getExtraAttributes()) }}>
+    {{ $getChildComponentContainer() }}
+</div>

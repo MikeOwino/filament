@@ -2,33 +2,33 @@
 
 namespace Filament\Forms\Components;
 
-class Fieldset extends Component
+use Filament\Forms\Components\Contracts\CanEntangleWithSingularRelationships;
+
+class Fieldset extends Component implements CanEntangleWithSingularRelationships
 {
-    protected $columns = 2;
+    use Concerns\EntanglesStateWithSingularRelationship;
 
-    public function columns($columns)
+    protected string $view = 'forms::components.fieldset';
+
+    final public function __construct(string $label)
     {
-        $this->configure(function () use ($columns) {
-            $this->columns = $columns;
-        });
-
-        return $this;
+        $this->label($label);
     }
 
-    public function getColumns()
+    public static function make(string $label): static
     {
-        return $this->columns;
+        $static = app(static::class, ['label' => $label]);
+        $static->configure();
+
+        return $static;
     }
 
-    public function getSubform()
+    protected function setUp(): void
     {
-        return parent::getSubform()->columns($this->columns);
-    }
+        parent::setUp();
 
-    public static function make($label, $schema = [])
-    {
-        return (new static())
-            ->label($label)
-            ->schema($schema);
+        $this->columnSpan('full');
+
+        $this->columns(2);
     }
 }

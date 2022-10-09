@@ -4,10 +4,12 @@ namespace Filament\Forms\Components;
 
 class Hidden extends Field
 {
-    public function value($value)
-    {
-        $this->default($value);
+    protected string $view = 'forms::components.hidden';
 
-        return $this;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->columnSpan('hidden');
     }
 }

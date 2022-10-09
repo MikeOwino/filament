@@ -2,133 +2,57 @@
 
 namespace Filament\Forms;
 
+use Filament\Forms\Testing\TestsForms;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use Livewire\Component;
-use Livewire\Livewire;
-use ReflectionClass;
-use Symfony\Component\Finder\SplFileInfo;
+use Livewire\Testing\TestableLivewire;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class FormsServiceProvider extends ServiceProvider
+class FormsServiceProvider extends PackageServiceProvider
 {
-    public function boot()
+    public function configurePackage(Package $package): void
     {
-        $this->bootDirectives();
-        $this->bootLoaders();
-        $this->bootLivewireComponents();
-        $this->bootPublishing();
+        $package
+            ->name('forms')
+            ->hasCommands($this->getCommands())
+            ->hasConfigFile()
+            ->hasTranslations()
+            ->hasViews();
     }
 
-    public function register()
+    protected function getCommands(): array
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/forms.php', 'forms');
-    }
+        $commands = [
+            Commands\InstallCommand::class,
+            Commands\MakeFieldCommand::class,
+            Commands\MakeLayoutComponentCommand::class,
+        ];
 
-    protected function bootDirectives()
-    {
-        Blade::directive('pushonce', function ($expression) {
-            [$pushName, $pushSub] = explode(':', trim(substr($expression, 1, -1)));
-            $key = '__pushonce_' . str_replace('-', '_', $pushName) . '_' . str_replace('-', '_', $pushSub);
+        $aliases = [];
 
-            return "<?php if(! isset(\$__env->{$key})): \$__env->{$key} = 1; \$__env->startPush('{$pushName}'); ?>";
-        });
+        foreach ($commands as $command) {
+            $class = 'Filament\\Forms\\Commands\\Aliases\\' . class_basename($command);
 
-        Blade::directive('endpushonce', function () {
-            return '<?php $__env->stopPush(); endif; ?>';
-        });
-    }
-
-    protected function bootLivewireComponents()
-    {
-        $this->registerLivewireComponentDirectory(__DIR__ . '/Http/Livewire', 'Filament\\Forms\\Http\\Livewire', 'forms.');
-    }
-
-    protected function bootLoaders()
-    {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'forms');
-
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'forms');
-    }
-
-    protected function bootPublishing()
-    {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        $this->publishes([
-            __DIR__ . '/../config/forms.php' => config_path('forms.php'),
-        ], 'forms-config');
-
-        $this->publishes([
-            __DIR__ . '/../resources/lang' => resource_path('lang/vendor/forms'),
-        ], 'forms-lang');
-
-        $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/forms'),
-        ], 'forms-views');
-    }
-
-    protected function mergeConfig(array $original, array $merging)
-    {
-        $array = array_merge($original, $merging);
-
-        foreach ($original as $key => $value) {
-            if (! is_array($value)) {
+            if (! class_exists($class)) {
                 continue;
             }
 
-            if (! Arr::exists($merging, $key)) {
-                continue;
-            }
-
-            if (is_numeric($key)) {
-                continue;
-            }
-
-            $array[$key] = $this->mergeConfig($value, $merging[$key]);
+            $aliases[] = $class;
         }
 
-        return $array;
+        return array_merge($commands, $aliases);
     }
 
-    protected function mergeConfigFrom($path, $key)
+    public function packageBooted(): void
     {
-        $config = $this->app['config']->get($key, []);
-
-        $this->app['config']->set($key, $this->mergeConfig(require $path, $config));
-    }
-
-    protected function registerLivewireComponentDirectory($directory, $namespace, $aliasPrefix = '')
-    {
-        $filesystem = new Filesystem();
-
-        if (! $filesystem->isDirectory($directory)) {
-            return;
+        if ($this->app->runningInConsole()) {
+            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
+                $this->publishes([
+                    $file->getRealPath() => base_path("stubs/filament/{$file->getFilename()}"),
+                ], 'forms-stubs');
+            }
         }
 
-        collect($filesystem->allFiles($directory))
-            ->map(function (SplFileInfo $file) use ($namespace) {
-                return (string) Str::of($namespace)
-                    ->append('\\', $file->getRelativePathname())
-                    ->replace(['/', '.php'], ['\\', '']);
-            })
-            ->filter(function ($class) {
-                return is_subclass_of($class, Component::class) && ! (new ReflectionClass($class))->isAbstract();
-            })
-            ->each(function ($class) use ($namespace, $aliasPrefix) {
-                $alias = Str::of($class)
-                    ->after($namespace . '\\')
-                    ->replace(['/', '\\'], '.')
-                    ->prepend($aliasPrefix)
-                    ->explode('.')
-                    ->map([Str::class, 'kebab'])
-                    ->implode('.');
-
-                Livewire::component($alias, $class);
-            });
+        TestableLivewire::mixin(new TestsForms());
     }
 }

@@ -2,30 +2,25 @@
 
 namespace Filament\Forms\Components\Concerns;
 
+use Closure;
+
 trait CanBeInline
 {
-    protected $isInline = false;
+    protected bool | Closure $isInline = true;
 
-    public function inline()
+    public function inline(bool | Closure $condition = true): static
     {
-        $this->configure(function () {
-            $this->isInline = true;
-        });
+        $this->isInline = $condition;
 
         return $this;
     }
 
-    public function isInline()
+    public function isInline(): bool
     {
-        return $this->isInline;
-    }
+        if ($this->hasInlineLabel()) {
+            return false;
+        }
 
-    public function stacked()
-    {
-        $this->configure(function () {
-            $this->isInline = false;
-        });
-
-        return $this;
+        return (bool) $this->evaluate($this->isInline);
     }
 }

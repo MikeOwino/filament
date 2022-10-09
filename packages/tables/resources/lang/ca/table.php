@@ -2,56 +2,73 @@
 
 return [
 
-    'delete' => [
+    'fields' => [
 
-        'button' => [
-            'label' => 'Suprimeix seleccionat',
+        'search_query' => [
+            'label' => 'Cerca',
+            'placeholder' => 'Cerca',
         ],
 
-        'modal' => [
-
-            'buttons' => [
-
-                'cancel' => [
-                    'label' => 'Cancela',
-                ],
-
-                'delete' => [
-                    'label' => 'Suprimeix seleccionat',
-                ],
-
-            ],
-
-            'description' => 'Esteu segur que voleu suprimir els registres seleccionats? Aquesta acció no es pot desfer.',
-
-            'heading' => 'Suprimir els registres seleccionats?',
-
-        ],
-
-    ],
-
-    'filter' => [
-        'placeholder' => 'Filtre',
-    ],
-
-    'messages' => [
-        'noRecords' => 'No s\'han trobat registres.',
     ],
 
     'pagination' => [
 
+        'label' => 'Paginació',
+
+        'overview' => 'Mostrant :first a :last de :total resultatss',
+
         'fields' => [
 
-            'recordsPerPage' => [
+            'records_per_page' => [
                 'label' => 'per pàgina',
             ],
 
         ],
 
+        'buttons' => [
+
+            'go_to_page' => [
+                'label' => 'Anar a la pàgina :page',
+            ],
+
+            'next' => [
+                'label' => 'Següent',
+            ],
+
+            'previous' => [
+                'label' => 'Anterior',
+            ],
+
+        ],
+
     ],
 
-    'search' => [
-        'placeholder' => 'Cerca',
+    'buttons' => [
+
+        'filter' => [
+            'label' => 'Filtre',
+        ],
+
+        'open_actions' => [
+            'label' => 'Open actions',
+        ],
+
+    ],
+
+    'empty' => [
+        'heading' => 'No s\'han trobat registres.',
+    ],
+
+    'selection_indicator' => [
+
+        'buttons' => [
+
+            'select_all' => [
+                'label' => 'Select all :count',
+            ],
+
+        ],
+
     ],
 
 ];

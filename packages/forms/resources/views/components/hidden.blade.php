@@ -1,7 +1,8 @@
 <input
+    id="{{ $getId() }}"
+    {!! $isRequired() ? 'required' : null !!}
     type="hidden"
-    {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-    {!! $formComponent->getName() ? "{$formComponent->getBindingAttribute()}=\"{$formComponent->getName()}\"" : null !!}
-    {!! $formComponent->isRequired() ? 'required' : null !!}
-    {!! Filament\format_attributes($formComponent->getExtraAttributes()) !!}
+    {{ $applyStateBindingModifiers('wire:model') }}="{{ $getStatePath() }}"
+    {{ $attributes->merge($getExtraAttributes())->class(['filament-forms-hidden-component']) }}
+    dusk="filament.forms.{{ $getStatePath() }}"
 />

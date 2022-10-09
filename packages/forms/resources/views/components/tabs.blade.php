@@ -1,48 +1,84 @@
-@php
-    $columnSpanClass = [
-        '',
-        'lg:col-span-1',
-        'lg:col-span-2',
-        'lg:col-span-3',
-        'lg:col-span-4',
-        'lg:col-span-5',
-        'lg:col-span-6',
-        'lg:col-span-7',
-        'lg:col-span-8',
-        'lg:col-span-9',
-        'lg:col-span-10',
-        'lg:col-span-11',
-        'lg:col-span-12',
-    ][$formComponent->getColumnSpan()]
-@endphp
-
 <div
-    x-data="{ tab: '{{ count($formComponent->getTabsConfig()) ? array_key_first($formComponent->getTabsConfig()) : null }}', tabs: {{ json_encode($formComponent->getTabsConfig()) }} }"
-    x-on:open.window="if ($event.detail in tabs) tab = $event.detail"
-    x-cloak
-    {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-    class="{{ $columnSpanClass }} bg-white border border-gray-200 rounded p-4 md:p-6"
->
-    <div class="-m-4 md:-m-6">
-        <div {!! __($formComponent->getLabel()) ? 'aria-label="' . __($formComponent->getLabel()) . '"' : null !!} role="tablist"
-             class="flex overflow-hidden bg-gray-100 rounded-t">
-            @foreach ($formComponent->getTabsConfig() as $tabId => $tabLabel)
-                <button type="button"
-                        aria-controls="{{ $tabId }}-tab"
-                        x-bind:aria-selected="tab === '{{ $tabId }}'"
-                        x-on:click="tab = '{{ $tabId }}'"
-                        role="tab"
-                        x-bind:tabindex="tab === '{{ $tabId }}' ? 0 : -1"
-                        class="p-3 text-sm font-medium leading-tight border-r border-gray-200 md:px-6"
-                        x-bind:class="{ 'bg-white': tab === '{{ $tabId }}' }"
-                >
-                    {{ __($tabLabel) }}
-                </button>
-            @endforeach
-        </div>
+    x-data="{
 
-        @foreach ($formComponent->getSchema() as $tab)
-            {{ $tab->render() }}
+        tab: null,
+
+        init: function () {
+            this.tab = this.getTabs()[@js($getActiveTab()) - 1]
+        },
+
+        getTabs: function () {
+            return JSON.parse(this.$refs.tabsData.value)
+        },
+
+    }"
+    x-cloak
+    {!! $getId() ? "id=\"{$getId()}\"" : null !!}
+    {{ $attributes->merge($getExtraAttributes())->class([
+        'filament-forms-tabs-component rounded-xl shadow-sm border border-gray-300 bg-white',
+        'dark:bg-gray-800 dark:border-gray-700' => config('forms.dark_mode'),
+    ]) }}
+    {{ $getExtraAlpineAttributeBag() }}
+>
+    <input
+        type="hidden"
+        value='{{
+            collect($getChildComponentContainer()->getComponents())
+                ->filter(static fn (\Filament\Forms\Components\Tabs\Tab $tab): bool => ! $tab->isHidden())
+                ->map(static fn (\Filament\Forms\Components\Tabs\Tab $tab) => $tab->getId())
+                ->values()
+                ->toJson()
+        }}'
+        x-ref="tabsData"
+    />
+
+    <div
+        {!! $getLabel() ? 'aria-label="' . $getLabel() . '"' : null !!}
+        role="tablist"
+        @class([
+            'filament-forms-tabs-component-header rounded-t-xl flex overflow-y-auto bg-gray-100',
+            'dark:bg-gray-700' => config('forms.dark_mode'),
+        ])
+    >
+        @foreach ($getChildComponentContainer()->getComponents() as $tab)
+            <button
+                type="button"
+                aria-controls="{{ $tab->getId() }}"
+                x-bind:aria-selected="tab === '{{ $tab->getId() }}'"
+                x-on:click="tab = '{{ $tab->getId() }}'"
+                role="tab"
+                x-bind:tabindex="tab === '{{ $tab->getId() }}' ? 0 : -1"
+                class="filament-forms-tabs-component-button flex items-center gap-2 shrink-0 p-3 text-sm font-medium"
+                x-bind:class="{
+                    'text-gray-500 @if (config('forms.dark_mode')) dark:text-gray-400 @endif': tab !== '{{ $tab->getId() }}',
+                    'filament-forms-tabs-component-button-active bg-white text-primary-600 @if (config('forms.dark_mode')) dark:bg-gray-800 @endif': tab === '{{ $tab->getId() }}',
+                }"
+            >
+                @if ($icon = $tab->getIcon())
+                    <x-dynamic-component
+                        :component="$icon"
+                        class="h-5 w-5"
+                    />
+                @endif
+
+                <span>{{ $tab->getLabel() }}</span>
+
+                @if ($badge = $tab->getBadge())
+                    <span
+                        class="inline-flex items-center justify-center ml-auto rtl:ml-0 rtl:mr-auto min-h-4 px-2 py-0.5 text-xs font-medium tracking-tight rounded-xl whitespace-normal"
+                        x-bind:class="{
+                            'bg-gray-200 @if (config('forms.dark_mode')) dark:bg-gray-600 @endif': tab !== '{{ $tab->getId() }}',
+                            'bg-primary-500/10 font-medium': tab === '{{ $tab->getId() }}',
+                        }"
+                    >
+                        {{ $badge }}
+                    </span>
+                @endif
+            </button>
         @endforeach
     </div>
+
+    @foreach ($getChildComponentContainer()->getComponents() as $tab)
+        {{ $tab }}
+    @endforeach
 </div>

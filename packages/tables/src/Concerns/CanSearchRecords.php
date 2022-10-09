@@ -2,102 +2,205 @@
 
 namespace Filament\Tables\Concerns;
 
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
 
 trait CanSearchRecords
 {
-    public $isSearchable = true;
+    public $tableColumnSearchQueries = [];
 
-    public $search = '';
+    public $tableSearchQuery = '';
 
-    protected $hasSearchQueriesApplied = false;
-
-    public function getSearch()
+    public function isTableSearchable(): bool
     {
-        return Str::lower($this->search);
-    }
+        foreach ($this->getCachedTableColumns() as $column) {
+            if (! $column->isGloballySearchable()) {
+                continue;
+            }
 
-    public function isSearchable()
-    {
-        return $this->isSearchable && collect($this->getTable()->getColumns())
-                ->filter(fn ($column) => $column->isSearchable())
-                ->count();
-    }
-
-    public function updatedSearch()
-    {
-        $this->selected = [];
-
-        if (! $this->hasPagination()) {
-            return;
+            return true;
         }
+
+        return false;
+    }
+
+    public function isTableSearchableByColumn(): bool
+    {
+        foreach ($this->getCachedTableColumns() as $column) {
+            if (! $column->isIndividuallySearchable()) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function updatedTableSearchQuery(): void
+    {
+        if ($this->shouldPersistTableSearchInSession()) {
+            session()->put(
+                $this->getTableSearchSessionKey(),
+                $this->tableSearchQuery,
+            );
+        }
+
+        $this->deselectAllTableRecords();
 
         $this->resetPage();
     }
 
-    protected function applyRelationshipSearch($query, $searchColumn)
+    public function updatedTableColumnSearchQueries($value, $key): void
     {
-        $relationshipName = (string) Str::of($searchColumn)->beforeLast('.');
-        $relatedColumnName = (string) Str::of($searchColumn)->afterLast('.');
-
-        return $query->{$this->hasNoSearchQueriesApplied() ? 'whereHas' : 'orWhereHas'}(
-            $relationshipName,
-            fn ($query) => $query->where($relatedColumnName, $this->getSearchOperator(), "%{$this->getSearch()}%"),
-        );
-    }
-
-    protected function applySearch($query)
-    {
-        if (
-            ! $this->isSearchable() ||
-            $this->search === '' ||
-            $this->search === null
-        ) {
-            return $query;
+        if (blank($value)) {
+            unset($this->tableColumnSearchQueries[$key]);
         }
 
-        $query->where(function ($query) {
-            collect($this->getTable()->getColumns())
-                ->filter(fn ($column) => $column->isSearchable())
-                ->each(function ($column) use (&$query) {
-                    foreach ($column->getSearchColumns() as $searchColumn) {
-                        if ($this->isRelationshipSearch($searchColumn)) {
-                            $query = $this->applyRelationshipSearch($query, $searchColumn);
-                        } else {
-                            $query->{$this->hasNoSearchQueriesApplied() ? 'where' : 'orWhere'}(
-                                $searchColumn,
-                                $this->getSearchOperator(),
-                                "%{$this->getSearch()}%"
-                            );
-                        }
+        if ($this->shouldPersistTableColumnSearchInSession()) {
+            session()->put(
+                $this->getTableColumnSearchSessionKey(),
+                $this->tableColumnSearchQueries,
+            );
+        }
 
-                        $this->hasSearchQueriesApplied = true;
-                    }
-                });
-        });
+        $this->deselectAllTableRecords();
+
+        $this->resetPage();
+    }
+
+    protected function applySearchToTableQuery(Builder $query): Builder
+    {
+        $this->applyColumnSearchToTableQuery($query);
+        $this->applyGlobalSearchToTableQuery($query);
 
         return $query;
     }
 
-    protected function getSearchOperator()
+    protected function applyColumnSearchToTableQuery(Builder $query): Builder
     {
-        return [
-            'pgsql' => 'ilike',
-        ][$this->getQuery()->getConnection()->getDriverName()] ?? 'like';
+        foreach ($this->getTableColumnSearchQueries() as $column => $search) {
+            if ($search === '') {
+                continue;
+            }
+
+            $column = $this->getCachedTableColumn($column);
+
+            if (! $column) {
+                continue;
+            }
+
+            foreach (explode(' ', $search) as $searchWord) {
+                $query->where(function (Builder $query) use ($column, $searchWord) {
+                    $isFirst = true;
+
+                    $column->applySearchConstraint(
+                        $query,
+                        $searchWord,
+                        $isFirst,
+                        isIndividual: true,
+                    );
+                });
+            }
+        }
+
+        return $query;
     }
 
-    protected function hasNoSearchQueriesApplied()
+    protected function applyGlobalSearchToTableQuery(Builder $query): Builder
     {
-        return ! $this->hasSearchQueriesApplied;
+        $search = $this->getTableSearchQuery();
+
+        if ($search === '') {
+            return $query;
+        }
+
+        foreach (explode(' ', $search) as $searchWord) {
+            $query->where(function (Builder $query) use ($searchWord) {
+                $isFirst = true;
+
+                foreach ($this->getCachedTableColumns() as $column) {
+                    $column->applySearchConstraint(
+                        $query,
+                        $searchWord,
+                        $isFirst,
+                    );
+                }
+            });
+        }
+
+        return $query;
     }
 
-    protected function hasSearchQueriesApplied()
+    protected function getTableSearchQuery(): string
     {
-        return $this->hasSearchQueriesApplied;
+        return trim(strtolower($this->tableSearchQuery));
     }
 
-    protected function isRelationshipSearch($column)
+    protected function getTableColumnSearchQueries(): array
     {
-        return Str::of($column)->contains('.');
+        // Example input of `$this->tableColumnSearchQueries`:
+        // [
+        //     'number' => '12345 ',
+        //     'customer' => [
+        //         'name' => ' john Smith',
+        //     ],
+        // ]
+
+        // The `$this->tableColumnSearchQueries` array is potentially nested.
+        // So, we iterate through it deeply:
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveArrayIterator($this->tableColumnSearchQueries),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        $searchQueries = [];
+        $path = [];
+
+        foreach ($iterator as $key => $value) {
+            $path[$iterator->getDepth()] = $key;
+
+            if (is_array($value)) {
+                continue;
+            }
+
+            // Nested array keys are flattened into `dot.syntax`.
+            $searchQueries[
+                implode('.', array_slice($path, 0, $iterator->getDepth() + 1))
+            ] = trim(strtolower($value));
+        }
+
+        return $searchQueries;
+
+        // Example output:
+        // [
+        //     'number' => '12345',
+        //     'customer.name' => 'john smith',
+        // ]
+    }
+
+    public function getTableSearchSessionKey(): string
+    {
+        $table = class_basename($this::class);
+
+        return "tables.{$table}_search";
+    }
+
+    protected function shouldPersistTableSearchInSession(): bool
+    {
+        return false;
+    }
+
+    public function getTableColumnSearchSessionKey(): string
+    {
+        $table = class_basename($this::class);
+
+        return "tables.{$table}_column_search";
+    }
+
+    protected function shouldPersistTableColumnSearchInSession(): bool
+    {
+        return false;
     }
 }

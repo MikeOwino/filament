@@ -1,58 +1,22 @@
-let mix = require('laravel-mix')
-
-/*
- |--------------------------------------------------------------------------
- | Mix Asset Management
- |--------------------------------------------------------------------------
- |
- | Mix provides a clean, fluent API for defining some Webpack build steps
- | for your application.
- |
- */
-
-const SRC = 'resources'
-const DIST = 'dist'
+const mix = require('laravel-mix')
+const tailwindcss = require('tailwindcss')
 
 mix.disableSuccessNotifications()
-mix.setPublicPath(DIST)
-mix.setResourceRoot(`/${SRC}/`)
-
-/**
- * Process Javascript
- *
- * @link https://laravel.com/docs/master/mix#working-with-scripts
- */
-mix.js(`${SRC}/js/filament.js`, 'js')
-
-/**
- * Process CSS via PostCSS
- *
- *
- * @link https://laravel.com/docs/master/mix#postcss
- */
-mix.postCss(`${SRC}/css/filament.css`, 'css').options({
-  processCssUrls: false,
+mix.options({
+    terser: {
+        extractComments: false,
+    },
 })
-
-/**
- * Sourcemaps
- *
- * Provide extra debugging information to your browser's
- * developer tools when using compiled assets.
- *
- * @link https://laravel.com/docs/master/mix#css-source-maps
- */
+mix.setPublicPath('packages/admin/dist')
+mix.setResourceRoot('packages/admin/resources')
 mix.sourceMaps()
+mix.version()
 
-if (mix.inProduction()) {
-  /**
-   * Versioning / Cache Busting
-   *
-   * After generating the versioned file, you won't know the exact file name.
-   * So, you should use Laravel's global mix function within your views
-   * to load the appropriately hashed asset.
-   *
-   * @link https://laravel.com/docs/master/mix#versioning-and-cache-busting
-   */
-  mix.version()
-}
+mix.js('packages/admin/resources/js/app.js', 'packages/admin/dist')
+mix.js('packages/admin/resources/js/echo.js', 'packages/admin/dist')
+
+mix.postCss('packages/admin/resources/css/app.css', 'packages/admin/dist', [
+    tailwindcss('packages/admin/tailwind.config.js'),
+]).options({
+    processCssUrls: false,
+})

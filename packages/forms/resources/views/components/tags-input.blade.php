@@ -1,126 +1,101 @@
-@pushonce('filament-scripts:tags-input-component')
-    <script>
-        function tagsInput(config) {
-            return {
-                hasError: false,
-
-                newTag: '',
-
-                separator: config.separator,
-
-                tags: [],
-
-                value: config.value,
-
-                createTag: function () {
-                    this.newTag = this.newTag.trim()
-
-                    if (this.newTag === '' || this.tags.includes(this.newTag)) {
-                        this.hasError = true
-
-                        return
-                    }
-
-                    this.tags.push(this.newTag)
-
-                    this.newTag = ''
-                },
-
-                deleteTag: function (tagToDelete) {
-                    this.tags = this.tags.filter((tag) => tag !== tagToDelete)
-                },
-
-                init: function () {
-                    if (this.value !== '' && this.value !== null) this.tags = this.value.trim().split(this.separator).filter(tag => tag !== '')
-
-                    this.$watch('newTag', () => this.hasError = false)
-
-                    this.$watch('tags', () => {
-                        this.value = this.tags.join(this.separator)
-                    })
-
-                    this.$watch('value', () => {
-                        try {
-                            let expectedTags = this.value.trim().split(this.separator).filter(tag => tag !== '')
-
-                            if (
-                                this.tags.length === expectedTags.length &&
-                                this.tags.filter((tag) => ! expectedTags.includes(tag)).length === 0
-                            ) return
-
-                            this.tags = expectedTags
-                        } catch (error) {
-                            this.tags = []
-                        }
-                    })
-                },
-            }
-        }
-    </script>
-@endpushonce
-
-<x-forms::field-group
-    :column-span="$formComponent->getColumnSpan()"
-    :error-key="$formComponent->getName()"
-    :for="$formComponent->getId()"
-    :help-message="$formComponent->getHelpMessage()"
-    :hint="$formComponent->getHint()"
-    :label="$formComponent->getLabel()"
-    :required="$formComponent->isRequired()"
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :id="$getId()"
+    :label="$getLabel()"
+    :label-sr-only="$isLabelHidden()"
+    :helper-text="$getHelperText()"
+    :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
+    :hint-icon="$getHintIcon()"
+    :required="$isRequired()"
+    :state-path="$getStatePath()"
 >
     <div
-        x-data="tagsInput({
-            separator: '{{ $formComponent->getSeparator() }}',
-            @if (Str::of($formComponent->getBindingAttribute())->startsWith('wire:model'))
-                value: @entangle($formComponent->getName()){{ Str::of($formComponent->getBindingAttribute())->after('wire:model') }},
-            @endif
+        x-data="tagsInputFormComponent({
+            state: $wire.{{ $applyStateBindingModifiers('entangle(\'' . $getStatePath() . '\')') }},
         })"
-        x-init="init()"
-        {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-        {!! Filament\format_attributes($formComponent->getExtraAttributes()) !!}
+        id="{{ $getId() }}"
+        {{ $attributes->merge($getExtraAttributes())->class(['filament-forms-tags-input-component']) }}
+        {{ $getExtraAlpineAttributeBag() }}
     >
-        @unless (Str::of($formComponent->getBindingAttribute())->startsWith(['wire:model', 'x-model']))
-            <input
-                x-model="value"
-                {!! $formComponent->getName() ? "{$formComponent->getBindingAttribute()}=\"{$formComponent->getName()}\"" : null !!}
-                type="hidden"
-            />
-        @endif
+        <div
+            x-show="state.length || {{ $isDisabled() ? 'false' : 'true' }}"
+            @class([
+                'block w-full transition duration-75 divide-y rounded-lg shadow-sm border overflow-hidden focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500',
+                'dark:divide-gray-600' => config('forms.dark_mode'),
+                'border-gray-300' => ! $errors->has($getStatePath()),
+                'dark:border-gray-600' => (! $errors->has($getStatePath())) && config('forms.dark_mode'),
+                'border-danger-600 ring-1 ring-inset ring-danger-600' => $errors->has($getStatePath()),
+            ])
+        >
+            @unless ($isDisabled())
+                <div>
+                    <input
+                        autocomplete="off"
+                        {!! $isAutofocused() ? 'autofocus' : null !!}
+                        id="{{ $getId() }}"
+                        list="{{ $getId() }}-suggestions"
+                        {!! $getPlaceholder() ? 'placeholder="' . $getPlaceholder() . '"' : null !!}
+                        type="text"
+                        dusk="filament.forms.{{ $getStatePath() }}"
+                        x-on:keydown.enter.stop.prevent="createTag()"
+                        x-on:keydown.,.stop.prevent="createTag()"
+                        x-on:blur="createTag()"
+                        x-on:paste="$nextTick(() => {
+                            if (newTag.includes(',')) {
+                                newTag.split(',').forEach((tag) => {
+                                    newTag = tag
 
-        <div x-show="tags.length || {{ $formComponent->isDisabled() ? 'false' : 'true' }}" class="rounded shadow-sm border overflow-hidden focus-within:border-blue-300 focus-within:ring focus-within:ring-blue-200 focus-within:ring-opacity-50 {{ $errors->has($formComponent->getName()) ? 'border-danger-600 motion-safe:animate-shake' : 'border-gray-300' }}">
-            @unless ($formComponent->isDisabled())
-                <input
-                    autocomplete="off"
-                    {!! $formComponent->isAutofocused() ? 'autofocus' : null !!}
-                    {!! $formComponent->getPlaceholder() ? 'placeholder="' . __($formComponent->getPlaceholder()) . '"' : null !!}
-                    type="text"
-                    x-on:keydown.enter.stop.prevent="createTag()"
-                    x-model="newTag"
-                    class="block w-full placeholder-gray-400 focus:placeholder-gray-500 placeholder-opacity-100 border-0"
-                    x-bind:class="{ 'text-danger-700': hasError }"
-                />
+                                    createTag()
+                                })
+                            }
+                        })"
+                        x-model="newTag"
+                        {{ $getExtraInputAttributeBag()->class([
+                            'webkit-calendar-picker-indicator:opacity-0 block w-full border-0',
+                            'dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400' => config('forms.dark_mode'),
+                        ]) }}
+                    />
+
+                    <datalist id="{{ $getId() }}-suggestions">
+                        @foreach ($getSuggestions() as $suggestion)
+                            <template x-if="! state.includes(@js($suggestion))" x-bind:key="@js($suggestion)">
+                                <option value="{{ $suggestion }}" />
+                            </template>
+                        @endforeach
+                    </datalist>
+                </div>
             @endunless
 
             <div
-                x-show="tags.length"
-                class="bg-white space-x-1 rtl:space-x-reverse relative w-full pl-3 pr-10 py-2 text-left {{ $formComponent->isDisabled() ? 'text-gray-500' : 'border-t' }} {{ $errors->has($formComponent->getName()) ? 'border-danger-600' : 'border-gray-300' }}"
+                x-show="state.length"
+                x-cloak
+                class="overflow-hidden relative w-full p-2"
             >
-                <template class="inline" x-for="tag in tags" x-bind:key="tag">
-                    <button
-                        @unless($formComponent->isDisabled())
-                            x-on:click="deleteTag(tag)"
-                        @endunless
-                        type="button"
-                        class="my-1 truncate max-w-full inline-flex space-x-2 rtl:space-x-reverse items-center font-mono text-xs py-1 px-2 border border-gray-300 bg-gray-100 text-gray-800 rounded shadow-sm inline-block relative @unless($formComponent->isDisabled()) cursor-pointer transition duration-200 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 hover:bg-gray-200 transition-colors duration-200 @else cursor-default @endunless"
-                    >
-                        <span x-text="tag"></span>
+                <div class="flex flex-wrap gap-1">
+                    <template class="hidden" x-for="tag in state" x-bind:key="tag">
+                        <button
+                            @unless ($isDisabled())
+                                x-on:click="deleteTag(tag)"
+                            @endunless
+                            type="button"
+                            x-bind:dusk="'filament.forms.{{ $getStatePath() }}' + '.tag.' + tag + '.delete'"
+                            @class([
+                                'inline-flex items-center justify-center min-h-6 px-2 py-0.5 text-sm font-medium tracking-tight text-primary-700 rounded-xl bg-primary-500/10 space-x-1 rtl:space-x-reverse',
+                                'dark:text-primary-500' => config('forms.dark_mode'),
+                                'cursor-default' => $isDisabled(),
+                            ])
+                        >
+                            <span class="text-left" x-text="tag"></span>
 
-                        @unless($formComponent->isDisabled())
-                            <x-heroicon-s-x class="w-3 h-3 text-gray-500" />
-                        @endunless
-                    </button>
-                </template>
+                            @unless ($isDisabled())
+                                <x-heroicon-s-x class="w-3 h-3 shrink-0" />
+                            @endunless
+                        </button>
+                    </template>
+                </div>
             </div>
         </div>
     </div>
-</x-forms::field-group>
+</x-dynamic-component>

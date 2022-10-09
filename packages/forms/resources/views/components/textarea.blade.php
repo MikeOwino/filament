@@ -1,25 +1,48 @@
-<x-forms::field-group
-    :column-span="$formComponent->getColumnSpan()"
-    :error-key="$formComponent->getName()"
-    :for="$formComponent->getId()"
-    :help-message="$formComponent->getHelpMessage()"
-    :hint="$formComponent->getHint()"
-    :label="$formComponent->getLabel()"
-    :required="$formComponent->isRequired()"
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :id="$getId()"
+    :label="$getLabel()"
+    :label-sr-only="$isLabelHidden()"
+    :helper-text="$getHelperText()"
+    :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
+    :hint-icon="$getHintIcon()"
+    :required="$isRequired()"
+    :state-path="$getStatePath()"
 >
     <textarea
-        {!! $formComponent->getAutocomplete() ? "autocomplete=\"{$formComponent->getAutocomplete()}\"" : null !!}
-        {!! $formComponent->isAutofocused() ? 'autofocus' : null !!}
-        {!! $formComponent->getCols() ? "cols=\"{$formComponent->getCols()}\"" : null !!}
-        {!! $formComponent->isDisabled() ? 'disabled' : null !!}
-        {!! $formComponent->getId() ? "id=\"{$formComponent->getId()}\"" : null !!}
-        {!! $formComponent->getMaxLength() ? "maxlength=\"{$formComponent->getMaxLength()}\"" : null !!}
-        {!! $formComponent->getMinLength() ? "minlength=\"{$formComponent->getMinLength()}\"" : null !!}
-        {!! $formComponent->getName() ? "{$formComponent->getBindingAttribute()}=\"{$formComponent->getName()}\"" : null !!}
-        {!! $formComponent->getPlaceholder() ? "placeholder=\"{$formComponent->getPlaceholder()}\"" : null !!}
-        {!! $formComponent->isRequired() ? 'required' : null !!}
-        {!! $formComponent->getRows() ? "rows=\"{$formComponent->getRows()}\"" : null !!}
-        class="block w-full rounded shadow-sm placeholder-gray-400 focus:placeholder-gray-500 placeholder-opacity-100 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 resize-none {{ $errors->has($formComponent->getName()) ? 'border-danger-600 motion-safe:animate-shake' : 'border-gray-300' }}"
-        {!! Filament\format_attributes($formComponent->getExtraAttributes()) !!}
+        {!! ($autocapitalize = $getAutocapitalize()) ? "autocapitalize=\"{$autocapitalize}\"" : null !!}
+        {!! ($autocomplete = $getAutocomplete()) ? "autocomplete=\"{$autocomplete}\"" : null !!}
+        {!! $isAutofocused() ? 'autofocus' : null !!}
+        {!! ($cols = $getCols()) ? "cols=\"{$cols}\"" : null !!}
+        {!! $isDisabled() ? 'disabled' : null !!}
+        id="{{ $getId() }}"
+        dusk="filament.forms.{{ $getStatePath() }}"
+        {!! ($placeholder = $getPlaceholder()) ? "placeholder=\"{$placeholder}\"" : null !!}
+        {!! ($rows = $getRows()) ? "rows=\"{$rows}\"" : null !!}
+        {{ $applyStateBindingModifiers('wire:model') }}="{{ $getStatePath() }}"
+        @if (! $isConcealed())
+            {!! filled($length = $getMaxLength()) ? "maxlength=\"{$length}\"" : null !!}
+            {!! filled($length = $getMinLength()) ? "minlength=\"{$length}\"" : null !!}
+            {!! $isRequired() ? 'required' : null !!}
+        @endif
+        {{
+            $attributes
+                ->merge($getExtraAttributes())
+                ->merge($getExtraInputAttributeBag()->getAttributes())
+                ->class([
+                    'filament-forms-textarea-component block w-full transition duration-75 rounded-lg shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70',
+                    'dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-primary-500' => config('forms.dark_mode'),
+                    'border-gray-300' => ! $errors->has($getStatePath()),
+                    'border-danger-600 ring-danger-600' => $errors->has($getStatePath()),
+                ])
+        }}
+        @if ($shouldAutosize())
+            x-data="textareaFormComponent()"
+            x-on:input="render()"
+            style="height: 150px"
+            {{ $getExtraAlpineAttributeBag() }}
+        @endif
     ></textarea>
-</x-forms::field-group>
+</x-dynamic-component>

@@ -2,35 +2,34 @@
 
 namespace Filament\Tables\Columns\Concerns;
 
+use Closure;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Contracts\HasTable;
+use Illuminate\Database\Eloquent\Model;
+
 trait CanCallAction
 {
-    protected $action;
+    protected Closure | Action | string | null $action = null;
 
-    public function action($action)
+    public function action(Closure | Action | string | null $action): static
     {
-        $this->configure(function () use ($action) {
-            $this->action = $action;
-        });
+        if (is_string($action)) {
+            $action = function (HasTable $livewire, ?Model $record) use ($action) {
+                if ($record) {
+                    return $livewire->{$action}($record);
+                }
+
+                return $livewire->{$action}();
+            };
+        }
+
+        $this->action = $action;
 
         return $this;
     }
 
-    public function getAction($record)
+    public function getAction(): Closure | Action | null
     {
-        $action = $this->action;
-
-        if (
-            $action === null &&
-            $this->isPrimary() &&
-            $this->getTable()->getPrimaryColumnAction()
-        ) {
-            $action = $this->getTable()->getPrimaryColumnAction();
-        }
-
-        if (is_callable($action)) {
-            return $action($record);
-        }
-
-        return $action;
+        return $this->action;
     }
 }

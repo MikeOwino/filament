@@ -2,65 +2,36 @@
 
 namespace Filament\Tables\Columns\Concerns;
 
+use Closure;
+
 trait CanOpenUrl
 {
-    protected $shouldUrlOpenInNewTab = false;
+    protected bool | Closure $shouldOpenUrlInNewTab = false;
 
-    protected $url;
+    protected string | Closure | null $url = null;
 
-    public function getUrl($record)
+    public function openUrlInNewTab(bool | Closure $condition = true): static
     {
-        $url = $this->url;
-
-        if (
-            $url === null &&
-            $this->isPrimary() &&
-            $this->getTable()->getPrimaryColumnUrl()
-        ) {
-            $url = $this->getTable()->getPrimaryColumnUrl();
-        }
-
-        if (is_callable($url)) {
-            $callback = $url;
-
-            return $callback($record);
-        }
-
-        return $url;
-    }
-
-    public function openUrlInNewTab()
-    {
-        $this->configure(function () {
-            $this->shouldUrlOpenInNewTab = true;
-        });
+        $this->shouldOpenUrlInNewTab = $condition;
 
         return $this;
     }
 
-    public function shouldUrlOpenInNewTab()
+    public function url(string | Closure | null $url, bool | Closure $shouldOpenInNewTab = false): static
     {
-        if (
-            $this->url === null &&
-            $this->isPrimary() &&
-            $this->getTable()->getPrimaryColumnUrl()
-        ) {
-            return $this->getTable()->shouldPrimaryColumnUrlOpenInNewTab();
-        }
-
-        return $this->shouldUrlOpenInNewTab;
-    }
-
-    public function url($url, $shouldOpenInNewTab = false)
-    {
-        $this->configure(function () use ($shouldOpenInNewTab, $url) {
-            $this->url = $url;
-
-            if ($shouldOpenInNewTab) {
-                $this->openUrlInNewTab();
-            }
-        });
+        $this->openUrlInNewTab($shouldOpenInNewTab);
+        $this->url = $url;
 
         return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->evaluate($this->url);
+    }
+
+    public function shouldOpenUrlInNewTab(): bool
+    {
+        return $this->evaluate($this->shouldOpenUrlInNewTab);
     }
 }

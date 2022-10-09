@@ -2,25 +2,46 @@
 
 namespace Filament\Forms\Components;
 
+use Closure;
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
+
 class Tabs extends Component
 {
-    public function getTabsConfig()
+    use HasExtraAlpineAttributes;
+
+    protected string $view = 'forms::components.tabs';
+
+    public int | Closure $activeTab = 1;
+
+    final public function __construct(string $label)
     {
-        return collect($this->getSchema())
-            ->filter(fn (Tab $tab) => ! $tab->isHidden())
-            ->mapWithKeys(fn ($tab) => [$tab->getId() => $tab->getLabel()])
-            ->toArray();
+        $this->label($label);
     }
 
-    public static function make($label = null)
+    public static function make(string $label): static
     {
-        return (new static())->label($label);
+        $static = app(static::class, ['label' => $label]);
+        $static->configure();
+
+        return $static;
     }
 
-    public function tabs($tabs)
+    public function tabs(array $tabs): static
     {
-        $this->schema($tabs);
+        $this->childComponents($tabs);
 
         return $this;
+    }
+
+    public function activeTab(int | Closure $activeTab): static
+    {
+        $this->activeTab = $activeTab;
+
+        return $this;
+    }
+
+    public function getActiveTab(): int
+    {
+        return $this->evaluate($this->activeTab);
     }
 }

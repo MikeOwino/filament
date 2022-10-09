@@ -2,31 +2,31 @@
 
 namespace Filament\Forms\Components;
 
-class Grid extends Component
+use Filament\Forms\Components\Contracts\CanEntangleWithSingularRelationships;
+
+class Grid extends Component implements CanEntangleWithSingularRelationships
 {
-    protected $columns = 2;
+    use Concerns\EntanglesStateWithSingularRelationship;
 
-    public function columns($columns)
+    protected string $view = 'forms::components.grid';
+
+    final public function __construct(array | int | null $columns)
     {
-        $this->configure(function () use ($columns) {
-            $this->columns = $columns;
-        });
-
-        return $this;
+        $this->columns($columns);
     }
 
-    public function getColumns()
+    public static function make(array | int | null $columns = 2): static
     {
-        return value($this->columns);
+        $static = app(static::class, ['columns' => $columns]);
+        $static->configure();
+
+        return $static;
     }
 
-    public function getSubform()
+    protected function setUp(): void
     {
-        return parent::getSubform()->columns($this->columns);
-    }
+        parent::setUp();
 
-    public static function make($schema = [])
-    {
-        return (new static())->schema($schema);
+        $this->columnSpan('full');
     }
 }

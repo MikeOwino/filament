@@ -2,30 +2,31 @@
 
 namespace Filament\Forms\Components\Concerns;
 
+use Closure;
+use Filament\Forms\Components\Field;
+
 trait CanBeAutocompleted
 {
-    protected $autocomplete;
+    protected string | Closure | null $autocomplete = null;
 
-    public function autocomplete($autocomplete = 'on')
+    public function autocomplete(string | Closure | null $autocomplete = 'on'): static
     {
-        $this->configure(function () use ($autocomplete) {
-            $this->autocomplete = $autocomplete;
+        $this->autocomplete = $autocomplete;
+
+        return $this;
+    }
+
+    public function disableAutocomplete(bool | Closure $condition = true): static
+    {
+        $this->autocomplete(static function (Field $component) use ($condition): ?string {
+            return $component->evaluate($condition) ? 'off' : null;
         });
 
         return $this;
     }
 
-    public function disableAutocomplete()
+    public function getAutocomplete(): ?string
     {
-        $this->configure(function () {
-            $this->autocomplete('off');
-        });
-
-        return $this;
-    }
-
-    public function getAutocomplete()
-    {
-        return $this->autocomplete;
+        return $this->evaluate($this->autocomplete);
     }
 }

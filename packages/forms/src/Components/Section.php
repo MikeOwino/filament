@@ -2,104 +2,85 @@
 
 namespace Filament\Forms\Components;
 
+use Closure;
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Str;
 
-class Section extends Component
+class Section extends Component implements Contracts\CanConcealComponents, Contracts\CanEntangleWithSingularRelationships
 {
-    use Concerns\CanConcealFields;
+    use Concerns\CanBeCollapsed;
+    use Concerns\CanBeCompacted;
+    use Concerns\EntanglesStateWithSingularRelationship;
+    use HasExtraAlpineAttributes;
 
-    protected $collapsed = false;
+    protected string $view = 'forms::components.section';
 
-    protected $collapsible = false;
+    protected string | Htmlable | Closure | null $description = null;
 
-    protected $columns = 1;
+    protected string | Closure $heading;
 
-    protected $heading;
-
-    protected $subheading;
-
-    public function collapsed()
+    final public function __construct(string | Closure $heading)
     {
-        $this->configure(function () {
-            $this->collapsed = true;
-            $this->collapsible = true;
-        });
+        $this->heading($heading);
+    }
+
+    public static function make(string | Closure $heading): static
+    {
+        $static = app(static::class, ['heading' => $heading]);
+        $static->configure();
+
+        return $static;
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->columnSpan('full');
+    }
+
+    public function description(string | Htmlable | Closure | null $description = null): static
+    {
+        $this->description = $description;
 
         return $this;
     }
 
-    public function collapsible($collapsible)
+    public function heading(string | Closure $heading): static
     {
-        $this->configure(function () use ($collapsible) {
-            $this->collapsible = $collapsible;
-        });
+        $this->heading = $heading;
 
         return $this;
     }
 
-    public function columns($columns)
+    public function getDescription(): string | Htmlable | null
     {
-        $this->configure(function () use ($columns) {
-            $this->columns = $columns;
-        });
-
-        return $this;
+        return $this->evaluate($this->description);
     }
 
-    public function getColumns()
+    public function getHeading(): string
     {
-        return $this->columns;
+        return $this->evaluate($this->heading);
     }
 
-    public function getHeading()
+    public function getId(): ?string
     {
-        return $this->heading;
+        $id = parent::getId();
+
+        if (! $id) {
+            $id = Str::slug($this->getHeading());
+
+            if ($statePath = $this->getStatePath()) {
+                $id = "{$statePath}.{$id}";
+            }
+        }
+
+        return $id;
     }
 
-    public function getSubform()
+    public function canConcealComponents(): bool
     {
-        return parent::getSubform()->columns($this->columns);
-    }
-
-    public function getSubheading()
-    {
-        return $this->subheading;
-    }
-
-    public function heading($heading)
-    {
-        $this->configure(function () use ($heading) {
-            $this->heading = $heading;
-        });
-
-        return $this;
-    }
-
-    public function isCollapsed()
-    {
-        return $this->collapsed;
-    }
-
-    public function isCollapsible()
-    {
-        return $this->collapsible;
-    }
-
-    public static function make($heading, $subheading = null, $schema = [])
-    {
-        return (new static())
-            ->heading($heading)
-            ->id(Str::slug($heading))
-            ->subheading($subheading)
-            ->schema($schema);
-    }
-
-    public function subheading($subheading)
-    {
-        $this->configure(function () use ($subheading) {
-            $this->subheading = $subheading;
-        });
-
-        return $this;
+        return $this->isCollapsible();
     }
 }

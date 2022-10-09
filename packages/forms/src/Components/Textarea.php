@@ -2,44 +2,59 @@
 
 namespace Filament\Forms\Components;
 
-class Textarea extends Field
+use Closure;
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
+
+class Textarea extends Field implements Contracts\CanBeLengthConstrained
 {
+    use Concerns\CanBeAutocapitalized;
     use Concerns\CanBeAutocompleted;
-    use Concerns\CanBeAutofocused;
-    use Concerns\CanBeCompared;
-    use Concerns\CanBeUnique;
     use Concerns\CanBeLengthConstrained;
+    use Concerns\HasExtraInputAttributes;
     use Concerns\HasPlaceholder;
+    use HasExtraAlpineAttributes;
 
-    protected $cols;
+    protected string $view = 'forms::components.textarea';
 
-    protected $rows;
+    protected int | Closure | null $cols = null;
 
-    public function cols($cols)
+    protected int | Closure | null $rows = null;
+
+    protected bool | Closure $shouldAutosize = false;
+
+    public function autosize(bool | Closure $condition = true): static
     {
-        $this->configure(function () use ($cols) {
-            $this->cols = $cols;
-        });
+        $this->shouldAutosize = $condition;
 
         return $this;
     }
 
-    public function getCols()
+    public function cols(int | Closure | null $cols): static
     {
-        return $this->cols;
-    }
-
-    public function getRows()
-    {
-        return $this->rows;
-    }
-
-    public function rows($rows)
-    {
-        $this->configure(function () use ($rows) {
-            $this->rows = $rows;
-        });
+        $this->cols = $cols;
 
         return $this;
+    }
+
+    public function rows(int | Closure | null $rows): static
+    {
+        $this->rows = $rows;
+
+        return $this;
+    }
+
+    public function getCols(): ?int
+    {
+        return $this->evaluate($this->cols);
+    }
+
+    public function getRows(): ?int
+    {
+        return $this->evaluate($this->rows);
+    }
+
+    public function shouldAutosize(): bool
+    {
+        return $this->rows === null || ((bool) $this->evaluate($this->shouldAutosize));
     }
 }

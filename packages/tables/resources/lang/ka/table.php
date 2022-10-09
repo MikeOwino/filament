@@ -2,56 +2,73 @@
 
 return [
 
-    'delete' => [
+    'fields' => [
 
-        'button' => [
-            'label' => 'მონიშნულების წაშლა',
+        'search_query' => [
+            'label' => 'ძიება',
+            'placeholder' => 'ძიება',
         ],
 
-        'modal' => [
-
-            'buttons' => [
-
-                'cancel' => [
-                    'label' => 'გაუქმება',
-                ],
-
-                'delete' => [
-                    'label' => 'მონიშნულების წაშლა',
-                ],
-
-            ],
-
-            'description' => 'დარწმუნებული ხართ, რომ გსურთ ამ ჩანაწერების წაშლა? მათი აღდგენა შეუძლებელი იქნება.',
-
-            'heading' => 'ჩანაწერების წაშლა',
-
-        ],
-
-    ],
-
-    'filter' => [
-        'placeholder' => 'ფილტრი',
-    ],
-
-    'messages' => [
-        'noRecords' => 'ჩანაწერები არ არსებობს.',
     ],
 
     'pagination' => [
 
+        'label' => 'გვერდების ნავიგაცია',
+
+        'overview' => 'Showing :first to :last of :total results',
+
         'fields' => [
 
-            'recordsPerPage' => [
+            'records_per_page' => [
                 'label' => 'ჩანაწერი თითო გვერდზე',
             ],
 
         ],
 
+        'buttons' => [
+
+            'go_to_page' => [
+                'label' => ':page-ე გვერდზე გადასვლა',
+            ],
+
+            'next' => [
+                'label' => 'შემდეგი',
+            ],
+
+            'previous' => [
+                'label' => 'წინა',
+            ],
+
+        ],
+
     ],
 
-    'search' => [
-        'placeholder' => 'ძიება',
+    'buttons' => [
+
+        'filter' => [
+            'label' => 'ფილტრი',
+        ],
+
+        'open_actions' => [
+            'label' => 'Open actions',
+        ],
+
+    ],
+
+    'empty' => [
+        'heading' => 'ჩანაწერები არ არსებობს.',
+    ],
+
+    'selection_indicator' => [
+
+        'buttons' => [
+
+            'select_all' => [
+                'label' => 'Select all :count',
+            ],
+
+        ],
+
     ],
 
 ];

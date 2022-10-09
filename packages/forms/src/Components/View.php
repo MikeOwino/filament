@@ -4,8 +4,13 @@ namespace Filament\Forms\Components;
 
 class View extends Component
 {
-    public static function make($view)
+    final public function __construct(string $view)
     {
-        return (new static())->view($view);
+        $this->view($view);
+    }
+
+    public static function make(string $view): static
+    {
+        return app(static::class, ['view' => $view]);
     }
 }
