@@ -8,12 +8,20 @@ return [
 
         'buttons' => [
 
+            'clone_item' => [
+                'label' => 'Duplikuj',
+            ],
+
             'create_item' => [
                 'label' => 'Dodaj do :label',
             ],
 
             'delete_item' => [
                 'label' => 'Usuń',
+            ],
+
+            'move_item' => [
+                'label' => 'Przesuń',
             ],
 
             'move_item_down' => [
@@ -101,6 +109,14 @@ return [
 
             'delete_item' => [
                 'label' => 'Usuń',
+            ],
+
+            'clone_item' => [
+                'label' => 'Duplikuj',
+            ],
+
+            'move_item' => [
+                'label' => 'Przesuń',
             ],
 
             'move_item_down' => [
@@ -199,6 +215,8 @@ return [
         ],
 
         'loading_message' => 'Wczytywanie...',
+
+        'max_items_message' => 'Można wybrać tylko :count elementów.',
 
         'no_search_results_message' => 'Żadne wyniki nie pasują do Twojego wyszukiwania.',
 

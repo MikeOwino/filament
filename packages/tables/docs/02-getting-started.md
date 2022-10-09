@@ -100,7 +100,7 @@ class ListPosts extends Component implements Tables\Contracts\HasTable
                     'warning' => 'reviewing',
                     'success' => 'published',
                 ]),
-            Tables\Columns\BooleanColumn::make('is_featured'),
+            Tables\Columns\IconColumn::make('is_featured')->boolean(),
         ]; // [tl! collapse:end]
     }
     
@@ -255,7 +255,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 protected function paginateTableQuery(Builder $query): Paginator
 {
-    return $query->simplePaginate($this->getTableRecordsPerPage());
+    return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
 }
 ```
 
@@ -306,7 +306,7 @@ protected function getTableRecordUrlUsing(): Closure
 
 In this example, clicking on each post will take you to the `posts.edit` route.
 
-If you'd like to [override the URL](columns#opening-urls) for a specific column, or instead [run a Livewire action](columns#running-actions) when a column is clicked, see the [columns documentation](columns#opening-urls).
+If you'd like to [override the URL](columns/getting-started#opening-urls) for a specific column, or instead [run a Livewire action](columns#running-actions) when a column is clicked, see the [columns documentation](columns#opening-urls).
 
 ## Record classes
 
@@ -393,7 +393,7 @@ class ListPosts extends Component implements Tables\Contracts\HasTable
                     'warning' => 'reviewing',
                     'success' => 'published',
                 ]),
-            Tables\Columns\BooleanColumn::make('is_featured'),
+            Tables\Columns\IconColumn::make('is_featured')->boolean(),
         ]; // [tl! collapse:end]
     }
     
@@ -544,7 +544,7 @@ class ListPosts extends Component implements Tables\Contracts\HasTable
                     'warning' => 'reviewing',
                     'success' => 'published',
                 ]),
-            Tables\Columns\BooleanColumn::make('is_featured'),
+            Tables\Columns\IconColumn::make('is_featured')->boolean(),
         ];
     } // [tl! collapse:end]
     

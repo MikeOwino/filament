@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Copiado',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'y :count más',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'por página',
+
+                'options' => [
+                    'all' => 'Todos',
+                ],
+
             ],
 
         ],
@@ -83,15 +97,22 @@ return [
 
         'buttons' => [
 
+            'remove' => [
+                'label' => 'Quitar filtro',
+            ],
+
+            'remove_all' => [
+                'label' => 'Quitar todos los filtros',
+                'tooltip' => 'Quitar todos los filtros',
+            ],
+
             'reset' => [
                 'label' => 'Resetea los filtros',
             ],
 
-            'close' => [
-                'label' => 'Cerrar',
-            ],
-
         ],
+
+        'indicator' => 'Filtros activos',
 
         'multi_select' => [
             'placeholder' => 'Todos',
@@ -107,7 +128,7 @@ return [
 
             'only_trashed' => 'Solo registros eliminados',
 
-            'with_trashed' => 'Con resgistros eliminados',
+            'with_trashed' => 'Con registros eliminados',
 
             'without_trashed' => 'Sin registros eliminados',
 
@@ -124,11 +145,34 @@ return [
         'buttons' => [
 
             'select_all' => [
-                'label' => 'Selecciona los :count',
+                'label' => 'Selecciona todos :count',
             ],
 
             'deselect_all' => [
                 'label' => 'Deselecciona todos',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Ordenar por',
+            ],
+
+            'direction' => [
+
+                'label' => 'Dirección de orden',
+
+                'options' => [
+                    'asc' => 'Ascendente',
+                    'desc' => 'Descendente',
+                ],
+
             ],
 
         ],

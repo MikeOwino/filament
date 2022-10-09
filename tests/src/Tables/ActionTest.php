@@ -56,11 +56,11 @@ it('can call an action with arguments', function () {
         ]);
 });
 
-it('can call an action and hold', function () {
+it('can call an action and halt', function () {
     livewire(PostsTable::class)
-        ->callTableAction('hold')
-        ->assertEmitted('hold-called')
-        ->assertTableActionHeld('hold');
+        ->callTableAction('halt')
+        ->assertEmitted('halt-called')
+        ->assertTableActionHalted('halt');
 });
 
 it('can hide an action', function () {
@@ -91,4 +91,22 @@ it('can have a color', function () {
     livewire(PostsTable::class)
         ->assertTableActionHasColor('has-color', 'primary')
         ->assertTableActionDoesNotHaveColor('has-color', 'secondary');
+});
+
+it('can have a URL', function () {
+    livewire(PostsTable::class)
+        ->assertTableActionHasUrl('url', 'https://filamentphp.com')
+        ->assertTableActionDoesNotHaveUrl('url', 'https://google.com');
+});
+
+it('can open a URL in a new tab', function () {
+    livewire(PostsTable::class)
+        ->assertTableActionShouldOpenUrlInNewTab('url_in_new_tab')
+        ->assertTableActionShouldNotOpenUrlInNewTab('url_not_in_new_tab');
+});
+
+it('can state whether a table action exists', function () {
+    livewire(PostsTable::class)
+        ->assertTableActionExists('exists')
+        ->assertTableActionDoesNotExist('does_not_exist');
 });

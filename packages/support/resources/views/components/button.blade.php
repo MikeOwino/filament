@@ -16,7 +16,7 @@
 
 @php
     $buttonClasses = array_merge([
-        'inline-flex items-center justify-center py-1 gap-1 font-medium rounded-lg border transition-colors focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-inset filament-button',
+        "filament-button filament-button-size-{$size} inline-flex items-center justify-center py-1 gap-1 font-medium rounded-lg border transition-colors focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-inset",
         'dark:focus:ring-offset-0' => $darkMode,
         'opacity-70 cursor-not-allowed pointer-events-none' => $disabled,
         'min-h-[2.25rem] px-4 text-sm' => $size === 'md',
@@ -101,15 +101,24 @@
         "
         {{ $attributes->class($buttonClasses) }}
     >
-        @if ($icon && $iconPosition === 'before')
-            <x-dynamic-component :component="$icon" :class="$iconClasses"/>
-        @elseif ($hasLoadingIndicator)
-            <x-filament-support::loading-indicator
-                wire:loading.delay
-                x-cloak
-                :wire:target="$loadingIndicatorTarget"
-                :class="$iconClasses"
-            />
+        @if ($iconPosition === 'before')
+            @if ($icon)
+                <x-dynamic-component
+                    :component="$icon"
+                    :wire:loading.remove.delay="$hasLoadingIndicator"
+                    :wire:target="$hasLoadingIndicator ? $loadingIndicatorTarget : false"
+                    :class="$iconClasses"
+                />
+            @endif
+
+            @if ($hasLoadingIndicator)
+                <x-filament-support::loading-indicator
+                    x-cloak
+                    wire:loading.delay
+                    :wire:target="$loadingIndicatorTarget"
+                    :class="$iconClasses"
+                />
+            @endif
         @endif
 
         <span class="flex items-center gap-1">
@@ -138,8 +147,24 @@
             @endif
         </span>
 
-        @if ($icon && $iconPosition === 'after')
-            <x-dynamic-component :component="$icon" :class="$iconClasses" />
+        @if ($iconPosition === 'after')
+            @if ($icon)
+                <x-dynamic-component
+                    :component="$icon"
+                    :wire:loading.remove.delay="$hasLoadingIndicator"
+                    :wire:target="$hasLoadingIndicator ? $loadingIndicatorTarget : false"
+                    :class="$iconClasses"
+                />
+            @endif
+
+            @if ($hasLoadingIndicator)
+                <x-filament-support::loading-indicator
+                    x-cloak
+                    wire:loading.delay
+                    :wire:target="$loadingIndicatorTarget"
+                    :class="$iconClasses"
+                />
+            @endif
         @endif
     </button>
 @elseif ($tag === 'a')

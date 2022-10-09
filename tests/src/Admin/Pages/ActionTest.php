@@ -51,11 +51,11 @@ it('can call an action with arguments', function () {
         ]);
 });
 
-it('can call an action and hold', function () {
+it('can call an action and halt', function () {
     livewire(PageActions::class)
-        ->callPageAction('hold')
-        ->assertEmitted('hold-called')
-        ->assertPageActionHeld('hold');
+        ->callPageAction('halt')
+        ->assertEmitted('halt-called')
+        ->assertPageActionHalted('halt');
 });
 
 it('can hide an action', function () {
@@ -86,4 +86,22 @@ it('can have a color', function () {
     livewire(PageActions::class)
         ->assertPageActionHasColor('has-color', 'primary')
         ->assertPageActionDoesNotHaveColor('has-color', 'secondary');
+});
+
+it('can have a URL', function () {
+    livewire(PageActions::class)
+        ->assertPageActionHasUrl('url', 'https://filamentphp.com')
+        ->assertPageActionDoesNotHaveUrl('url', 'https://google.com');
+});
+
+it('can open a URL in a new tab', function () {
+    livewire(PageActions::class)
+        ->assertPageActionShouldOpenUrlInNewTab('url_in_new_tab')
+        ->assertPageActionShouldNotOpenUrlInNewTab('url_not_in_new_tab');
+});
+
+it('can state whether a page action exists', function () {
+    livewire(PageActions::class)
+        ->assertPageActionExists('exists')
+        ->assertPageActionDoesNotExist('does_not_exist');
 });

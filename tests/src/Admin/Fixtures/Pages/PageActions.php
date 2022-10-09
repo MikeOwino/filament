@@ -31,12 +31,12 @@ class PageActions extends Page
                 ->action(function (array $arguments) {
                     $this->emit('arguments-called', $arguments);
                 }),
-            Action::make('hold')
+            Action::make('halt')
                 ->requiresConfirmation()
                 ->action(function (Action $action) {
-                    $this->emit('hold-called');
+                    $this->emit('halt-called');
 
-                    $action->hold();
+                    $action->halt();
                 }),
             Action::make('visible'),
             Action::make('hidden')
@@ -50,6 +50,13 @@ class PageActions extends Page
                 ->label('My Action'),
             Action::make('has-color')
                 ->color('primary'),
+            Action::make('exists'),
+            Action::make('url')
+                ->url('https://filamentphp.com'),
+            Action::make('url_in_new_tab')
+                ->url('https://filamentphp.com', true),
+            Action::make('url_not_in_new_tab')
+                ->url('https://filamentphp.com', false),
         ];
     }
 }

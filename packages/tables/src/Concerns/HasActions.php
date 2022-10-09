@@ -4,7 +4,7 @@ namespace Filament\Tables\Concerns;
 
 use Closure;
 use Filament\Forms\ComponentContainer;
-use Filament\Support\Actions\Exceptions\Hold;
+use Filament\Support\Exceptions\Halt;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Model;
@@ -28,12 +28,12 @@ trait HasActions
 
     public function cacheTableActions(): void
     {
+        $this->cachedTableActions = [];
+
         $actions = Action::configureUsing(
             Closure::fromCallable([$this, 'configureTableAction']),
             fn (): array => $this->getTableActions(),
         );
-
-        $this->cachedTableActions = [];
 
         foreach ($actions as $index => $action) {
             if ($action instanceof ActionGroup) {
@@ -49,6 +49,27 @@ trait HasActions
             $action->table($this->getCachedTable());
 
             $this->cachedTableActions[$action->getName()] = $action;
+        }
+    }
+
+    public function cacheTableColumnActions(): void
+    {
+        foreach ($this->getCachedTableColumns() as $column) {
+            $action = $column->getAction();
+
+            if (! ($action instanceof Action)) {
+                continue;
+            }
+
+            $actionName = $action->getName();
+
+            if (array_key_exists($actionName, $this->cachedTableActions)) {
+                continue;
+            }
+
+            $action->table($this->getCachedTable());
+
+            $this->cachedTableActions[$actionName] = $action;
         }
     }
 
@@ -72,38 +93,38 @@ trait HasActions
 
         $form = $this->getMountedTableActionForm();
 
-        if ($action->hasForm()) {
-            $action->callBeforeFormValidated();
-
-            $action->formData($form->getState());
-
-            $action->callAfterFormValidated();
-        }
-
-        $action->callBefore();
-
         try {
+            if ($action->hasForm()) {
+                $action->callBeforeFormValidated();
+
+                $action->formData($form->getState());
+
+                $action->callAfterFormValidated();
+            }
+
+            $action->callBefore();
+
             $result = $action->call([
                 'form' => $form,
             ]);
-        } catch (Hold $exception) {
+
+            try {
+                return $action->callAfter() ?? $result;
+            } finally {
+                $this->mountedTableAction = null;
+
+                $action->record(null);
+                $this->mountedTableActionRecord(null);
+
+                $action->resetArguments();
+                $action->resetFormData();
+
+                $this->dispatchBrowserEvent('close-modal', [
+                    'id' => "{$this->id}-table-action",
+                ]);
+            }
+        } catch (Halt $exception) {
             return;
-        }
-
-        try {
-            return $action->callAfter() ?? $result;
-        } finally {
-            $this->mountedTableAction = null;
-
-            $action->record(null);
-            $this->mountedTableActionRecord(null);
-
-            $action->resetArguments();
-            $action->resetFormData();
-
-            $this->dispatchBrowserEvent('close-modal', [
-                'id' => "{$this->id}-table-action",
-            ]);
         }
     }
 
@@ -132,16 +153,20 @@ trait HasActions
             fn () => $this->getMountedTableActionForm(),
         );
 
-        if ($action->hasForm()) {
-            $action->callBeforeFormFilled();
-        }
+        try {
+            if ($action->hasForm()) {
+                $action->callBeforeFormFilled();
+            }
 
-        $action->mount([
-            'form' => $this->getMountedTableActionForm(),
-        ]);
+            $action->mount([
+                'form' => $this->getMountedTableActionForm(),
+            ]);
 
-        if ($action->hasForm()) {
-            $action->callAfterFormFilled();
+            if ($action->hasForm()) {
+                $action->callAfterFormFilled();
+            }
+        } catch (Halt $exception) {
+            return;
         }
 
         if (! $action->shouldOpenModal()) {
@@ -244,6 +269,11 @@ trait HasActions
     }
 
     protected function getTableActionsPosition(): ?string
+    {
+        return null;
+    }
+
+    protected function getTableActionsColumnLabel(): ?string
     {
         return null;
     }

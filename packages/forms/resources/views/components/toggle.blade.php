@@ -5,6 +5,8 @@
     :label-sr-only="$isLabelHidden()"
     :helper-text="$getHelperText()"
     :hint="$getHint()"
+    :hint-action="$getHintAction()"
+    :hint-color="$getHintColor()"
     :hint-icon="$getHintIcon()"
     :required="$isRequired()"
     :state-path="$getStatePath()"
@@ -36,13 +38,12 @@
                 }"
                 {!! $isAutofocused() ? 'autofocus' : null !!}
                 {!! $isDisabled() ? 'disabled' : null !!}
+                wire:loading.attr="disabled"
                 id="{{ $getId() }}"
                 dusk="filament.forms.{{ $getStatePath() }}"
                 type="button"
                 {{ $attributes->merge($getExtraAttributes())->class([
-                    'relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 disabled:opacity-70 disabled:cursor-not-allowed disabled:pointer-events-none filament-forms-toggle-component',
-                    'border-gray-300' => ! $errors->has($getStatePath()),
-                    'border-danger-300 ring-danger-500' => $errors->has($getStatePath()),
+                    'filament-forms-toggle-component relative inline-flex border-2 border-transparent shrink-0 h-6 w-11 rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed disabled:pointer-events-none',
                 ]) }}
                 {{ $getExtraAlpineAttributeBag() }}
             >
@@ -62,7 +63,19 @@
                         }"
                     >
                         @if ($hasOffIcon())
-                            <x-dynamic-component :component="$getOffIcon()" class="h-3 w-3 text-gray-400" />
+                            <x-dynamic-component
+                                :component="$getOffIcon()"
+                                :class="\Illuminate\Support\Arr::toCssClasses([
+                                    'h-3 w-3',
+                                    match ($getOffColor()) {
+                                        'danger' => 'text-danger-500',
+                                        'primary' => 'text-primary-500',
+                                        'success' => 'text-success-500',
+                                        'warning' => 'text-warning-500',
+                                        default => 'text-gray-400',
+                                    },
+                                ])"
+                            />
                         @endif
                     </span>
 
@@ -75,7 +88,20 @@
                         }"
                     >
                         @if ($hasOnIcon())
-                            <x-dynamic-component :component="$getOnIcon()" x-cloak class="h-3 w-3 text-primary-600" />
+                            <x-dynamic-component
+                                :component="$getOnIcon()"
+                                x-cloak
+                                :class="\Illuminate\Support\Arr::toCssClasses([
+                                    'h-3 w-3',
+                                    match ($getOnColor()) {
+                                        'danger' => 'text-danger-500',
+                                        'secondary' => 'text-gray-400',
+                                        'success' => 'text-success-500',
+                                        'warning' => 'text-warning-500',
+                                        default => 'text-primary-500',
+                                    },
+                                ])"
+                            />
                         @endif
                     </span>
                 </span>

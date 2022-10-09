@@ -4,8 +4,16 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Gekopieerd',
+            ],
+
+        ],
+
         'tags' => [
-            'more' => 'en nog :count',
+            'more' => 'en :count meer',
         ],
 
     ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'per pagina',
+
+                'options' => [
+                    'all' => 'Alles',
+                ],
+
             ],
 
         ],
@@ -76,20 +90,24 @@ return [
     ],
 
     'empty' => [
-        'heading' => 'Geen resultaten gevonden',
+        'heading' => 'Geen records gevonden',
     ],
 
     'filters' => [
 
         'buttons' => [
 
-            'reset' => [
-                'label' => 'Filters resetten',
-                'tooltip' => 'Filters resetten',
+            'remove' => [
+                'label' => 'Filter verwijderen',
             ],
 
-            'close' => [
-                'label' => 'Sluiten',
+            'remove_all' => [
+                'label' => 'Alle filters verwijderen',
+                'tooltip' => 'Alle filters verwijderen',
+            ],
+
+            'reset' => [
+                'label' => 'Filters resetten',
             ],
 
         ],
@@ -132,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'Alles deselecteren',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Sorteren op',
+            ],
+
+            'direction' => [
+
+                'label' => 'Sorteerrichting',
+
+                'options' => [
+                    'asc' => 'Oplopend',
+                    'desc' => 'Aflopend',
+                ],
+
             ],
 
         ],

@@ -49,6 +49,15 @@ use Filament\Tables\Filters\Filter;
 Filter::make('is_featured')->label('Featured')
 ```
 
+
+Optionally, you can have the label automatically translated by using the `translateLabel()` method:
+
+```php
+use Filament\Tables\Filters\Filter;
+
+Filter::make('is_featured')->translateLabel() // Equivalent to `label(__('Is featured'))`
+```
+
 ### Using a toggle button instead of a checkbox
 
 By default, filters use a checkbox to control the filter. Instead, you may switch to using a toggle button, using the `toggle()` method:
@@ -88,7 +97,7 @@ SelectFilter::make('status')
     ])
 ```
 
-Select filters do not require a custom `query()` method. The column name used to scope the query is the name of the filter. To customize this, you may use the `column()` method:
+Select filters do not require a custom `query()` method. The column name used to scope the query is the name of the filter. To customize this, you may use the `attribute()` method:
 
 ```php
 use Filament\Tables\Filters\SelectFilter;
@@ -99,7 +108,23 @@ SelectFilter::make('status')
         'reviewing' => 'Reviewing',
         'published' => 'Published',
     ])
-    ->column('status_id')
+    ->attribute('status_id')
+```
+
+#### Multi-select filters
+
+These allow the user to select multiple options to apply the filter to their table. For example, a status filter may present the user with a few status options to pick from and filter the table using:
+
+```php
+use Filament\Tables\Filters\SelectFilter;
+
+SelectFilter::make('status')
+    ->multiple()
+    ->options([
+        'draft' => 'Draft',
+        'reviewing' => 'Reviewing',
+        'published' => 'Published',
+    ])
 ```
 
 #### Relationship select filters
@@ -122,45 +147,6 @@ SelectFilter::make('author')
     ->relationship('author', 'name', fn (Builder $query) => $query->withTrashed())
 ```
 
-### Multi-select filters
-
-Multi-select filters allow you to quickly create a filter that allows the user to select multiple options to apply the filter to their table. For example, a status filter may present the user with a few status options to pick from and filter the table using:
-
-```php
-use Filament\Tables\Filters\MultiSelectFilter;
-
-MultiSelectFilter::make('status')
-    ->options([
-        'draft' => 'Draft',
-        'reviewing' => 'Reviewing',
-        'published' => 'Published',
-    ])
-```
-
-Multi-select filters do not require a custom `query()` method. The column name used to scope the query is the name of the filter. To customize this, you may use the `column()` method:
-
-```php
-use Filament\Tables\Filters\MultiSelectFilter;
-
-MultiSelectFilter::make('status')
-    ->options([
-        'draft' => 'Draft',
-        'reviewing' => 'Reviewing',
-        'published' => 'Published',
-    ])
-    ->column('status_id')
-```
-
-#### Relationship multi-select filters
-
-Multi-select filters are also able to automatically populate themselves based on a `BelongsTo` relationship. For example, if your table has a `author` relationship with a `name` column, you may use `relationship()` to filter the records belonging to a selection of authors:
-
-```php
-use Filament\Tables\Filters\MultiSelectFilter;
-
-MultiSelectFilter::make('author')->relationship('author', 'name')
-```
-
 ### Ternary filters
 
 Ternary filters allow you to quickly create a filter which has three states - usually true, false and blank. To filter a column named `is_admin` to be `true` or `false`, you may use the ternary filter:
@@ -180,14 +166,14 @@ TernaryFilter::make('email_verified_at')
     ->nullable()
 ```
 
-The column name used to scope the query is the name of the filter. To customize this, you may use the `column()` method:
+The column name used to scope the query is the name of the filter. To customize this, you may use the `attribute()` method:
 
 ```php
 use Filament\Tables\Filters\TernaryFilter;
 
 TernaryFilter::make('verified')
     ->nullable()
-    ->column('status_id')
+    ->attribute('status_id')
 ```
 
 You may customise the query used for each state of the ternary filter, using the `queries()` method:
@@ -335,7 +321,7 @@ protected function getTableFiltersFormWidth(): string
 }
 ```
 
-## Displaying filters above the table content
+## Displaying filters above or below the table content
 
 To render the filters above the table content instead of in a popover, you may use:
 
@@ -345,6 +331,17 @@ use Filament\Tables\Filters\Layout;
 protected function getTableFiltersLayout(): ?string
 {
     return Layout::AboveContent;
+}
+```
+
+To render the filters below the table content instead of in a popover, you may use:
+
+```php
+use Filament\Tables\Filters\Layout;
+
+protected function getTableFiltersLayout(): ?string
+{
+    return Layout::BelowContent;
 }
 ```
 

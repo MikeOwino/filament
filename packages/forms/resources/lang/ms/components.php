@@ -8,12 +8,20 @@ return [
 
         'buttons' => [
 
+            'clone_item' => [
+                'label' => 'Klon',
+            ],
+
             'create_item' => [
                 'label' => 'Tambah ke :label',
             ],
 
             'delete_item' => [
                 'label' => 'Padam',
+            ],
+
+            'move_item' => [
+                'label' => 'Pindah',
             ],
 
             'move_item_down' => [
@@ -101,6 +109,10 @@ return [
 
             'delete_item' => [
                 'label' => 'Padam',
+            ],
+
+            'move_item' => [
+                'label' => 'Pindah',
             ],
 
             'clone_item' => [
@@ -203,6 +215,8 @@ return [
         ],
 
         'loading_message' => 'Memuatkan...',
+
+        'max_items_message' => 'Hanya :count boleh dipilih.',
 
         'no_search_results_message' => 'Tiada pilihan yang sepadan dengan carian anda.',
 

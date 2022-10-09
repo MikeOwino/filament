@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Скопировано',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'и :count еще',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'на страницу',
+
+                'options' => [
+                    'all' => 'Все',
+                ],
+
             ],
 
         ],
@@ -76,22 +90,29 @@ return [
     ],
 
     'empty' => [
-        'heading' => 'не найдено записей',
+        'heading' => 'Не найдено записей',
     ],
 
     'filters' => [
 
         'buttons' => [
 
+            'remove' => [
+                'label' => 'Удалить фильтр',
+            ],
+
+            'remove_all' => [
+                'label' => 'Отчистить фильтры',
+                'tooltip' => 'Отчистить фильтры',
+            ],
+
             'reset' => [
                 'label' => 'Сбросить фильтры',
             ],
 
-            'close' => [
-                'label' => 'Закрыть',
-            ],
-
         ],
+
+        'indicator' => 'Активные фильтры',
 
         'multi_select' => [
             'placeholder' => 'Все',
@@ -129,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'Убрать выделение со всех',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Сортировать по',
+            ],
+
+            'direction' => [
+
+                'label' => 'Направление',
+
+                'options' => [
+                    'asc' => 'По возрастанию',
+                    'desc' => 'По убыванию',
+                ],
+
             ],
 
         ],

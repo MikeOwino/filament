@@ -6,7 +6,9 @@ use Filament\Forms\ComponentContainer;
 use Filament\Notifications\Notification;
 use Filament\Pages\Actions\Action;
 use Filament\Pages\Contracts\HasFormActions;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * @property ComponentContainer $form
@@ -30,11 +32,16 @@ class CreateRecord extends Page implements HasFormActions
 
     public function mount(): void
     {
+        $this->authorizeAccess();
+
+        $this->fillForm();
+    }
+
+    protected function authorizeAccess(): void
+    {
         static::authorizeResourceAccess();
 
         abort_unless(static::getResource()::canCreate(), 403);
-
-        $this->fillForm();
     }
 
     protected function fillForm(): void
@@ -48,21 +55,27 @@ class CreateRecord extends Page implements HasFormActions
 
     public function create(bool $another = false): void
     {
-        $this->callHook('beforeValidate');
+        $this->authorizeAccess();
 
-        $data = $this->form->getState();
+        try {
+            $this->callHook('beforeValidate');
 
-        $this->callHook('afterValidate');
+            $data = $this->form->getState();
 
-        $data = $this->mutateFormDataBeforeCreate($data);
+            $this->callHook('afterValidate');
 
-        $this->callHook('beforeCreate');
+            $data = $this->mutateFormDataBeforeCreate($data);
 
-        $this->record = $this->handleRecordCreation($data);
+            $this->callHook('beforeCreate');
 
-        $this->form->model($this->record)->saveRelationships();
+            $this->record = $this->handleRecordCreation($data);
 
-        $this->callHook('afterCreate');
+            $this->form->model($this->record)->saveRelationships();
+
+            $this->callHook('afterCreate');
+        } catch (Halt $exception) {
+            return;
+        }
 
         if (filled($this->getCreatedNotificationMessage())) {
             Notification::make()
@@ -150,7 +163,7 @@ class CreateRecord extends Page implements HasFormActions
         }
 
         return __('filament::resources/pages/create-record.title', [
-            'label' => static::getResource()::getModelLabel(),
+            'label' => Str::headline(static::getResource()::getModelLabel()),
         ]);
     }
 

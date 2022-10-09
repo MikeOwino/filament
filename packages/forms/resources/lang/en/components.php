@@ -8,12 +8,20 @@ return [
 
         'buttons' => [
 
+            'clone_item' => [
+                'label' => 'Clone',
+            ],
+
             'create_item' => [
                 'label' => 'Add to :label',
             ],
 
             'delete_item' => [
                 'label' => 'Delete',
+            ],
+
+            'move_item' => [
+                'label' => 'Move',
             ],
 
             'move_item_down' => [
@@ -105,6 +113,10 @@ return [
 
             'clone_item' => [
                 'label' => 'Clone',
+            ],
+
+            'move_item' => [
+                'label' => 'Move',
             ],
 
             'move_item_down' => [
@@ -203,6 +215,8 @@ return [
         ],
 
         'loading_message' => 'Loading...',
+
+        'max_items_message' => 'Only :count can be selected.',
 
         'no_search_results_message' => 'No options match your search.',
 

@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Copied',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'and :count more',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'per page',
+
+                'options' => [
+                    'all' => 'All',
+                ],
+
             ],
 
         ],
@@ -83,13 +97,17 @@ return [
 
         'buttons' => [
 
-            'reset' => [
-                'label' => 'Reset filters',
-                'tooltip' => 'Reset filters',
+            'remove' => [
+                'label' => 'Remove filter',
             ],
 
-            'close' => [
-                'label' => 'Close',
+            'remove_all' => [
+                'label' => 'Remove all filters',
+                'tooltip' => 'Remove all filters',
+            ],
+
+            'reset' => [
+                'label' => 'Reset filters',
             ],
 
         ],
@@ -132,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'Deselect all',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Sort by',
+            ],
+
+            'direction' => [
+
+                'label' => 'Sort direction',
+
+                'options' => [
+                    'asc' => 'Ascending',
+                    'desc' => 'Descending',
+                ],
+
             ],
 
         ],

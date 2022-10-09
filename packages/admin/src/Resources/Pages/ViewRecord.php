@@ -34,6 +34,11 @@ class ViewRecord extends Page
         return static::$breadcrumb ?? __('filament::resources/pages/view-record.breadcrumb');
     }
 
+    public function getFormTabLabel(): ?string
+    {
+        return __('filament::resources/pages/view-record.form.tab.label');
+    }
+
     public function mount($record): void
     {
         static::authorizeResourceAccess();
@@ -56,6 +61,14 @@ class ViewRecord extends Page
         $this->form->fill($data);
 
         $this->callHook('afterFill');
+    }
+
+    protected function refreshFormData(array $attributes): void
+    {
+        $this->data = array_merge(
+            $this->data,
+            $this->getRecord()->only($attributes),
+        );
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

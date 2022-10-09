@@ -19,14 +19,21 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
         return [
             Tables\Columns\TextColumn::make('title')
                 ->sortable()
-                ->searchable(),
+                ->searchable()
+                ->action(fn () => $this->emit('title-action-called')),
             Tables\Columns\TextColumn::make('author.name')
                 ->sortable()
-                ->searchable(),
-            Tables\Columns\BooleanColumn::make('is_published'),
+                ->searchable()
+                ->action(
+                    Tables\Actions\Action::make('column-action-object')
+                        ->action(fn () => $this->emit('column-action-object-called')),
+                ),
+            Tables\Columns\IconColumn::make('is_published')->boolean(),
             Tables\Columns\TextColumn::make('visible'),
             Tables\Columns\TextColumn::make('hidden')
                 ->hidden(),
+            Tables\Columns\TextColumn::make('with_state')
+                ->getStateUsing(fn () => 'correct state'),
         ];
     }
 
@@ -37,6 +44,12 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
                 ->query(fn (Builder $query) => $query->where('is_published', true)),
             Tables\Filters\SelectFilter::make('author')
                 ->relationship('author', 'name'),
+            Tables\Filters\SelectFilter::make('select_filter_attribute')
+                ->options([
+                    true => 'Published',
+                    false => 'Not Published',
+                ])
+                ->attribute('is_published'),
         ];
     }
 
@@ -56,12 +69,12 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
                 ->action(function (array $arguments) {
                     $this->emit('arguments-called', $arguments);
                 }),
-            Tables\Actions\Action::make('hold')
+            Tables\Actions\Action::make('halt')
                 ->requiresConfirmation()
                 ->action(function (Tables\Actions\Action $action) {
-                    $this->emit('hold-called');
+                    $this->emit('halt-called');
 
-                    $action->hold();
+                    $action->halt();
                 }),
             Tables\Actions\Action::make('visible'),
             Tables\Actions\Action::make('hidden')
@@ -75,6 +88,13 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
                 ->label('My Action'),
             Tables\Actions\Action::make('has-color')
                 ->color('primary'),
+            Tables\Actions\Action::make('exists'),
+            Tables\Actions\Action::make('url')
+                ->url('https://filamentphp.com'),
+            Tables\Actions\Action::make('url_in_new_tab')
+                ->url('https://filamentphp.com', true),
+            Tables\Actions\Action::make('url_not_in_new_tab')
+                ->url('https://filamentphp.com'),
         ];
     }
 
@@ -103,12 +123,12 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
                 ->action(function (array $arguments) {
                     $this->emit('arguments-called', $arguments);
                 }),
-            Tables\Actions\BulkAction::make('hold')
+            Tables\Actions\BulkAction::make('halt')
                 ->requiresConfirmation()
                 ->action(function (Tables\Actions\BulkAction $action) {
-                    $this->emit('hold-called');
+                    $this->emit('halt-called');
 
-                    $action->hold();
+                    $action->halt();
                 }),
             Tables\Actions\BulkAction::make('visible'),
             Tables\Actions\BulkAction::make('hidden')
@@ -122,6 +142,7 @@ class PostsTable extends Component implements Tables\Contracts\HasTable
                 ->label('My Action'),
             Tables\Actions\BulkAction::make('has-color')
                 ->color('primary'),
+            Tables\Actions\BulkAction::make('exists'),
         ];
     }
 

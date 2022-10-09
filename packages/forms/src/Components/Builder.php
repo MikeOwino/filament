@@ -10,10 +10,11 @@ use Filament\Forms\Components\Builder\Block;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
-class Builder extends Field
+class Builder extends Field implements Contracts\CanConcealComponents
 {
     use Concerns\CanBeCollapsed;
     use Concerns\CanLimitItemsLength;
+    use Concerns\CanBeCloned;
 
     protected string $view = 'forms::components.builder';
 
@@ -105,6 +106,24 @@ class Builder extends Field
 
                     $livewire = $component->getLivewire();
                     data_set($livewire, $statePath, $items);
+                },
+            ],
+            'builder::cloneItem' => [
+                function (Builder $component, string $statePath, string $uuidToDuplicate): void {
+                    if ($statePath !== $component->getStatePath()) {
+                        return;
+                    }
+
+                    $newUuid = (string) Str::uuid();
+
+                    $livewire = $component->getLivewire();
+                    data_set(
+                        $livewire,
+                        "{$statePath}.{$newUuid}",
+                        data_get($livewire, "{$statePath}.{$uuidToDuplicate}"),
+                    );
+
+                    $component->collapsed(false, shouldMakeComponentCollapsible: false);
                 },
             ],
             'builder::moveItemDown' => [
@@ -314,5 +333,10 @@ class Builder extends Field
     public function isInset(): bool
     {
         return (bool) $this->evaluate($this->isInset);
+    }
+
+    public function canConcealComponents(): bool
+    {
+        return $this->isCollapsible();
     }
 }

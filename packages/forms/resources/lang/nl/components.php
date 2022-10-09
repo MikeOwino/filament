@@ -1,11 +1,16 @@
 <?php
 
 return [
+
     'builder' => [
 
         'collapsed' => 'Inhoud ingeklapt',
 
         'buttons' => [
+
+            'clone_item' => [
+                'label' => 'Klonen',
+            ],
 
             'create_item' => [
                 'label' => 'Toevoegen aan :label',
@@ -13,6 +18,10 @@ return [
 
             'delete_item' => [
                 'label' => 'Verwijderen',
+            ],
+
+            'move_item' => [
+                'label' => 'Verplaatsen',
             ],
 
             'move_item_down' => [
@@ -103,7 +112,11 @@ return [
             ],
 
             'clone_item' => [
-                'label' => 'Dupliceren',
+                'label' => 'Klonen',
+            ],
+
+            'move_item' => [
+                'label' => 'Verplaatsen',
             ],
 
             'move_item_down' => [
@@ -202,6 +215,8 @@ return [
         ],
 
         'loading_message' => 'Laden...',
+
+        'max_items_message' => 'Er kunnen maar :count geselecteerd worden.',
 
         'no_search_results_message' => 'Er zijn geen resultaten voor je zoekopdracht.',
 

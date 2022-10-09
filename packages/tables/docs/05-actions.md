@@ -105,6 +105,17 @@ Action::make('edit')
     ->url(fn (Post $record): string => route('posts.edit', $record))
 ```
 
+Optionally, you can have the label automatically translated by using the `translateLabel()` method:
+
+```php
+use App\Models\Post;
+use Filament\Tables\Actions\Action;
+
+Action::make('edit')
+    ->translateLabel() // Equivalent to `label(__('Edit'))`
+    ->url(fn (Post $record): string => route('posts.edit', $record))
+```
+
 ## Setting a color
 
 Actions may have a color to indicate their significance. It may be either `primary`, `secondary`, `success`, `warning` or `danger`:
@@ -117,6 +128,17 @@ BulkAction::make('delete')
     ->action(fn (Collection $records) => $records->each->delete())
     ->deselectRecordsAfterCompletion()
     ->color('danger')
+```
+
+## Setting a size
+
+The default size for table actions is `sm` but you may also change it to either `md` or `lg`:
+
+```php
+use Filament\Tables\Actions\Action;
+
+Action::make('delete')
+    ->size('lg')
 ```
 
 ## Setting an icon

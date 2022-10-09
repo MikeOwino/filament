@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Http\Livewire\Concerns\CanNotify;
 use Filament\Navigation\NavigationItem;
+use Filament\Support\Exceptions\Halt;
 use Filament\Tables\Contracts\RendersFormComponentActionModal;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
@@ -95,9 +96,9 @@ class Page extends Component implements Forms\Contracts\HasForms, RendersFormCom
             ->slug();
     }
 
-    public static function getUrl(array $parameters = [], bool $absolute = true): string
+    public static function getUrl(array $parameters = [], bool $isAbsolute = true): string
     {
-        return route(static::getRouteName(), $parameters, $absolute);
+        return route(static::getRouteName(), $parameters, $isAbsolute);
     }
 
     public function render(): View
@@ -169,9 +170,19 @@ class Page extends Component implements Forms\Contracts\HasForms, RendersFormCom
         return [];
     }
 
+    protected function getHeaderWidgetsColumns(): int | array
+    {
+        return 2;
+    }
+
     protected function getFooterWidgets(): array
     {
         return [];
+    }
+
+    protected function getFooterWidgetsColumns(): int | array
+    {
+        return 2;
     }
 
     protected function getHeading(): string
@@ -218,5 +229,10 @@ class Page extends Component implements Forms\Contracts\HasForms, RendersFormCom
         }
 
         (static::$reportValidationErrorUsing)($exception);
+    }
+
+    protected function halt(): void
+    {
+        throw new Halt();
     }
 }

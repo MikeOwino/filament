@@ -209,6 +209,35 @@ CreateAction::make()
     })
 ```
 
+### Halting the creation process
+
+At any time, you may call `$action->halt()` from inside a lifecycle hook or mutation method, which will halt the entire creation process:
+
+```php
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\CreateAction;
+
+CreateAction::make()
+    ->before(function (CreateAction $action) {
+        if (! $this->record->team->subscribed()) {
+            Notification::make()
+                ->warning()
+                ->title('You don\'t have an active subscription!')
+                ->body('Choose a plan to continue.')
+                ->persistent()
+                ->actions([
+                    Action::make('subscribe')
+                        ->button()
+                        ->url(route('subscribe'), shouldOpenInNewTab: true),
+                ])
+                ->send();
+        
+            $action->halt();
+        }
+    })
+```
+
 ## Editing records
 
 ### Editing with pivot attributes
@@ -329,6 +358,35 @@ EditAction::make()
     })
 ```
 
+### Halting the saving process
+
+At any time, you may call `$action->halt()` from inside a lifecycle hook or mutation method, which will halt the entire saving process:
+
+```php
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\EditAction;
+
+EditAction::make()
+    ->before(function (EditAction $action) {
+        if (! $this->record->team->subscribed()) {
+            Notification::make()
+                ->warning()
+                ->title('You don\'t have an active subscription!')
+                ->body('Choose a plan to continue.')
+                ->persistent()
+                ->actions([
+                    Action::make('subscribe')
+                        ->button()
+                        ->url(route('subscribe'), shouldOpenInNewTab: true),
+                ])
+                ->send();
+        
+            $action->halt();
+        }
+    })
+```
+
 ## Attaching and detaching records
 
 Filament is able to attach and detach records for `BelongsToMany` and `MorphToMany` relationships.
@@ -395,6 +453,18 @@ In this example, `$action->getRecordSelect()` outputs the select field to pick t
 
 Please ensure that any pivot attributes are listed in the `withPivot()` method of the relationship *and* inverse relationship.
 
+### Scoping the options
+
+You may want to scope the options available to `AttachAction`:
+
+```php
+use Filament\Tables\Actions\AttachAction;
+use Illuminate\Database\Eloquent\Builder;
+
+AttachAction::make()
+    ->recordSelectOptionsQuery(fn (Builder $query) => $query->whereBelongsTo(auth()->user())
+```
+
 ### Handling duplicates
 
 By default, you will not be allowed to attach a record more than once. This is because you must also set up a primary `id` column on the pivot table for this feature to work.
@@ -452,6 +522,18 @@ By default, as you search for a record to associate, options will load from the 
 use Filament\Tables\Actions\AssociateAction;
 
 AssociateAction::make()->preloadRecordSelect()
+```
+
+### Scoping the options
+
+You may want to scope the options available to `AssociateAction`:
+
+```php
+use Filament\Tables\Actions\AssociateAction;
+use Illuminate\Database\Eloquent\Builder;
+
+AssociateAction::make()
+    ->recordSelectOptionsQuery(fn (Builder $query) => $query->whereBelongsTo(auth()->user())
 ```
 
 ## Viewing records
@@ -512,6 +594,17 @@ use Illuminate\Database\Eloquent\Model;
 
 public static function canViewForRecord(Model $ownerRecord): bool
 {
-    return $ownerRecord->status === Status::Draft
+    return $ownerRecord->status === Status::Draft;
+}
+```
+
+## Moving the resource form to tabs
+
+On the Edit or View page class, override the `hasCombinedRelationManagerTabsWithForm()` method:
+
+```php
+public function hasCombinedRelationManagerTabsWithForm(): bool
+{
+    return true;
 }
 ```

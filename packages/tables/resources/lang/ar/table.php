@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'تم النسخ',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'و :count أكثر',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'لكل صفحة',
+
+                'options' => [
+                    'all' => 'الكل',
+                ],
+
             ],
 
         ],
@@ -83,13 +97,17 @@ return [
 
         'buttons' => [
 
-            'reset' => [
-                'label' => 'إعادة ضبط المصفيات',
-                'tooltip' => 'إعادة ضبط المصفيات',
+            'remove' => [
+                'label' => 'إلغاء المصفيات',
             ],
 
-            'close' => [
-                'label' => 'غلق',
+            'remove_all' => [
+                'label' => 'إلغاء كافة المصفيات',
+                'tooltip' => 'إلغاء كافة المصفيات',
+            ],
+
+            'reset' => [
+                'label' => 'إعادة ضبط المصفيات',
             ],
 
         ],
@@ -132,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'إلغاء تحديد الكل',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'ترتيب حسب',
+            ],
+
+            'direction' => [
+
+                'label' => 'اتجاه الترتيب',
+
+                'options' => [
+                    'asc' => 'تصاعدي',
+                    'desc' => 'تنازلي',
+                ],
+
             ],
 
         ],

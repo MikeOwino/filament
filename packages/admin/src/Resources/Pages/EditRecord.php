@@ -11,6 +11,7 @@ use Filament\Pages\Actions\ReplicateAction;
 use Filament\Pages\Actions\RestoreAction;
 use Filament\Pages\Actions\ViewAction;
 use Filament\Pages\Contracts\HasFormActions;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -36,15 +37,25 @@ class EditRecord extends Page implements HasFormActions
         return static::$breadcrumb ?? __('filament::resources/pages/edit-record.breadcrumb');
     }
 
+    public function getFormTabLabel(): ?string
+    {
+        return __('filament::resources/pages/edit-record.form.tab.label');
+    }
+
     public function mount($record): void
+    {
+        $this->record = $this->resolveRecord($record);
+
+        $this->authorizeAccess();
+
+        $this->fillForm();
+    }
+
+    protected function authorizeAccess(): void
     {
         static::authorizeResourceAccess();
 
-        $this->record = $this->resolveRecord($record);
-
         abort_unless(static::getResource()::canEdit($this->getRecord()), 403);
-
-        $this->fillForm();
     }
 
     protected function fillForm(): void
@@ -60,6 +71,14 @@ class EditRecord extends Page implements HasFormActions
         $this->callHook('afterFill');
     }
 
+    protected function refreshFormData(array $attributes): void
+    {
+        $this->data = array_merge(
+            $this->data,
+            $this->getRecord()->only($attributes),
+        );
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         return $data;
@@ -67,19 +86,25 @@ class EditRecord extends Page implements HasFormActions
 
     public function save(bool $shouldRedirect = true): void
     {
-        $this->callHook('beforeValidate');
+        $this->authorizeAccess();
 
-        $data = $this->form->getState();
+        try {
+            $this->callHook('beforeValidate');
 
-        $this->callHook('afterValidate');
+            $data = $this->form->getState();
 
-        $data = $this->mutateFormDataBeforeSave($data);
+            $this->callHook('afterValidate');
 
-        $this->callHook('beforeSave');
+            $data = $this->mutateFormDataBeforeSave($data);
 
-        $this->handleRecordUpdate($this->getRecord(), $data);
+            $this->callHook('beforeSave');
 
-        $this->callHook('afterSave');
+            $this->handleRecordUpdate($this->getRecord(), $data);
+
+            $this->callHook('afterSave');
+        } catch (Halt $exception) {
+            return;
+        }
 
         $shouldRedirect = $shouldRedirect && ($redirectUrl = $this->getRedirectUrl());
 

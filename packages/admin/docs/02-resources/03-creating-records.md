@@ -119,6 +119,34 @@ class CreateUser extends CreateRecord
 }
 ```
 
+## Halting the creation process
+
+At any time, you may call `$this->halt()` from inside a lifecycle hook or mutation method, which will halt the entire creation process:
+
+```php
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
+
+protected function beforeCreate(): void
+{
+    if (! $this->record->team->subscribed()) {
+        Notification::make()
+            ->warning()
+            ->title('You don\'t have an active subscription!')
+            ->body('Choose a plan to continue.')
+            ->persistent()
+            ->actions([
+                Action::make('subscribe')
+                    ->button()
+                    ->url(route('subscribe'), shouldOpenInNewTab: true),
+            ])
+            ->send();
+    
+        $this->halt();
+    }
+}
+```
+
 ## Authorization
 
 For authorization, Filament will observe any [model policies](https://laravel.com/docs/authorization#creating-policies) that are registered in your app.
@@ -191,6 +219,15 @@ protected function getSteps(): array
 ```
 
 Now, visit the Create page to see your wizard in action! The Edit page will still use the form defined within the resource class.
+
+If you'd like to allow free navigation, so all the steps are skippable, override the `hasSkippableSteps()` method:
+
+```php
+public function hasSkippableSteps(): bool
+{
+    return true;
+}
+```
 
 ### Sharing fields between the resource form and wizards
 

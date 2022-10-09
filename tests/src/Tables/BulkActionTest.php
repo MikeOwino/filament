@@ -66,13 +66,13 @@ it('can call a bulk action with arguments', function () {
         ]);
 });
 
-it('can call a bulk action and hold', function () {
+it('can call a bulk action and halt', function () {
     $posts = Post::factory()->count(10)->create();
 
     livewire(PostsTable::class)
-        ->callTableBulkAction('hold', records: $posts)
-        ->assertEmitted('hold-called')
-        ->assertTableBulkActionHeld('hold');
+        ->callTableBulkAction('halt', records: $posts)
+        ->assertEmitted('halt-called')
+        ->assertTableBulkActionHalted('halt');
 });
 
 it('can hide a bulk action', function () {
@@ -103,4 +103,10 @@ it('can have a color', function () {
     livewire(PostsTable::class)
         ->assertTableBulkActionHasColor('has-color', 'primary')
         ->assertTableBulkActionDoesNotHaveColor('has-color', 'secondary');
+});
+
+it('can state whether a bulk action exists', function () {
+    livewire(PostsTable::class)
+        ->assertTableBulkActionExists('exists')
+        ->assertTableBulkActionDoesNotExist('does_not_exist');
 });

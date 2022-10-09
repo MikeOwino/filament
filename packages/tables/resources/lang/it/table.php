@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Copiato',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'e altri :count',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'per pagina',
+
+                'options' => [
+                    'all' => 'Tutti',
+                ],
+
             ],
 
         ],
@@ -83,13 +97,17 @@ return [
 
         'buttons' => [
 
-            'reset' => [
-                'label' => 'Azzera filtri',
-                'tooltip' => 'Resetta filtri',
+            'remove' => [
+                'label' => 'Rimuovi filtro',
             ],
 
-            'close' => [
-                'label' => 'Chiudi',
+            'remove_all' => [
+                'label' => 'Rimuovi tutti i filtri',
+                'tooltip' => 'Rimuovi tutti i filtri',
+            ],
+
+            'reset' => [
+                'label' => 'Azzera filtri',
             ],
 
         ],
@@ -132,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'Deseleziona tutti',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Ordina per',
+            ],
+
+            'direction' => [
+
+                'label' => 'Ordine',
+
+                'options' => [
+                    'asc' => 'Crescente',
+                    'desc' => 'Decrescente',
+                ],
+
             ],
 
         ],

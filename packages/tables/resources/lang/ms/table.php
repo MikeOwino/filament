@@ -4,6 +4,14 @@ return [
 
     'columns' => [
 
+        'color' => [
+
+            'messages' => [
+                'copied' => 'Disalin',
+            ],
+
+        ],
+
         'tags' => [
             'more' => 'dan :count lagi',
         ],
@@ -28,7 +36,13 @@ return [
         'fields' => [
 
             'records_per_page' => [
+
                 'label' => 'setiap halaman',
+
+                'options' => [
+                    'all' => 'Semua',
+                ],
+
             ],
 
         ],
@@ -83,13 +97,17 @@ return [
 
         'buttons' => [
 
-            'reset' => [
-                'label' => 'Tetapkan semula penapis',
-                'tooltip' => 'Tetapkan semula penapis',
+            'remove' => [
+                'label' => 'Buang penapis',
             ],
 
-            'close' => [
-                'label' => 'Tutup',
+            'remove_all' => [
+                'label' => 'Buang semua penapis',
+                'tooltip' => 'Buang semua penapis',
+            ],
+
+            'reset' => [
+                'label' => 'Tetapkan semula penapis',
             ],
 
         ],
@@ -132,6 +150,29 @@ return [
 
             'deselect_all' => [
                 'label' => 'Nyahpilih semua',
+            ],
+
+        ],
+
+    ],
+
+    'sorting' => [
+
+        'fields' => [
+
+            'column' => [
+                'label' => 'Disusun mengikut',
+            ],
+
+            'direction' => [
+
+                'label' => 'Arah susunan',
+
+                'options' => [
+                    'asc' => 'Menaik',
+                    'desc' => 'Menurun',
+                ],
+
             ],
 
         ],

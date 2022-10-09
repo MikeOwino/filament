@@ -57,6 +57,8 @@ class Resource
 
     protected static string | array $middlewares = [];
 
+    protected static int $globalSearchResultsLimit = 50;
+
     public static function form(Form $form): Form
     {
         return $form;
@@ -105,12 +107,24 @@ class Resource
     public static function can(string $action, ?Model $record = null): bool
     {
         $policy = Gate::getPolicyFor($model = static::getModel());
+        $user = Filament::auth()->user();
 
-        if ($policy === null || (! method_exists($policy, $action))) {
+        if ($policy === null) {
             return true;
         }
 
-        return Gate::forUser(Filament::auth()->user())->check($action, $record ?? $model);
+        if (
+            method_exists($policy, 'before') &&
+            is_bool($response = $policy->before($user, $action))
+        ) {
+            return $response;
+        }
+
+        if (! method_exists($policy, $action)) {
+            return true;
+        }
+
+        return Gate::forUser($user)->check($action, $record ?? $model);
     }
 
     public static function canViewAny(): bool
@@ -199,6 +213,11 @@ class Resource
         return [$titleAttribute];
     }
 
+    public static function getGlobalSearchResultActions(Model $record): array
+    {
+        return [];
+    }
+
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [];
@@ -222,6 +241,11 @@ class Resource
         return null;
     }
 
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return static::$globalSearchResultsLimit;
+    }
+
     public static function getGlobalSearchResults(string $searchQuery): Collection
     {
         $query = static::getGlobalSearchEloquentQuery();
@@ -237,7 +261,7 @@ class Resource
         }
 
         return $query
-            ->limit(50)
+            ->limit(static::getGlobalSearchResultsLimit())
             ->get()
             ->map(function (Model $record): ?GlobalSearchResult {
                 $url = static::getGlobalSearchResultUrl($record);
@@ -250,6 +274,7 @@ class Resource
                     title: static::getGlobalSearchResultTitle($record),
                     url: $url,
                     details: static::getGlobalSearchResultDetails($record),
+                    actions: static::getGlobalSearchResultActions($record),
                 );
             })
             ->filter();
@@ -368,11 +393,11 @@ class Resource
             ->implode('/');
     }
 
-    public static function getUrl($name = 'index', $params = []): string
+    public static function getUrl($name = 'index', $params = [], $isAbsolute = true): string
     {
         $routeBaseName = static::getRouteBaseName();
 
-        return route("{$routeBaseName}.{$name}", $params);
+        return route("{$routeBaseName}.{$name}", $params, $isAbsolute);
     }
 
     public static function hasPage($page): bool
@@ -395,21 +420,39 @@ class Resource
             default => 'like',
         };
 
+        $model = $query->getModel();
+
         foreach ($searchAttributes as $searchAttribute) {
             $whereClause = $isFirst ? 'where' : 'orWhere';
 
             $query->when(
-                Str::of($searchAttribute)->contains('.'),
-                fn ($query) => $query->{"{$whereClause}Relation"}(
-                    (string) Str::of($searchAttribute)->beforeLast('.'),
-                    (string) Str::of($searchAttribute)->afterLast('.'),
-                    $searchOperator,
-                    "%{$searchQuery}%",
-                ),
-                fn ($query) => $query->{$whereClause}(
-                    $searchAttribute,
-                    $searchOperator,
-                    "%{$searchQuery}%",
+                method_exists($model, 'isTranslatableAttribute') && $model->isTranslatableAttribute($searchAttribute),
+                function (Builder $query) use ($databaseConnection, $searchAttribute, $searchOperator, $searchQuery, $whereClause): Builder {
+                    $activeLocale = app()->getLocale();
+
+                    $searchColumn = match ($databaseConnection->getDriverName()) {
+                        'pgsql' => "{$searchAttribute}->>'{$activeLocale}'",
+                        default => "json_extract({$searchAttribute}, \"$.{$activeLocale}\")",
+                    };
+
+                    return $query->{"{$whereClause}Raw"}(
+                        "lower({$searchColumn}) {$searchOperator} ?",
+                        "%{$searchQuery}%",
+                    );
+                },
+                fn (Builder $query): Builder => $query->when(
+                    Str::of($searchAttribute)->contains('.'),
+                    fn ($query) => $query->{"{$whereClause}Relation"}(
+                        (string) Str::of($searchAttribute)->beforeLast('.'),
+                        (string) Str::of($searchAttribute)->afterLast('.'),
+                        $searchOperator,
+                        "%{$searchQuery}%",
+                    ),
+                    fn ($query) => $query->{$whereClause}(
+                        $searchAttribute,
+                        $searchOperator,
+                        "%{$searchQuery}%",
+                    ),
                 ),
             );
 

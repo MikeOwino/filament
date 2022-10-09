@@ -157,7 +157,7 @@ trait InteractsWithForms
         } catch (ValidationException $exception) {
             $this->onValidationError($exception);
 
-            $this->focusConcealedComponents(array_keys($exception->validator->failed()));
+            $this->dispatchBrowserEvent('expand-concealing-component');
 
             throw $exception;
         }
@@ -172,7 +172,9 @@ trait InteractsWithForms
         try {
             return parent::validateOnly($field, $rules, $messages, $attributes);
         } catch (ValidationException $exception) {
-            $this->focusConcealedComponents(array_keys($exception->validator->failed()));
+            $this->onValidationError($exception);
+
+            $this->dispatchBrowserEvent('expand-concealing-component');
 
             throw $exception;
         }
@@ -262,23 +264,6 @@ trait InteractsWithForms
         return $this->cachedForms;
     }
 
-    protected function focusConcealedComponents(array $statePaths): void
-    {
-        $componentToFocus = null;
-
-        foreach ($this->getCachedForms() as $form) {
-            if ($componentToFocus = $form->getInvalidComponentToFocus($statePaths)) {
-                break;
-            }
-        }
-
-        if ($concealingComponent = $componentToFocus?->getConcealingComponent()) {
-            $this->dispatchBrowserEvent('expand-concealing-component', [
-                'id' => $concealingComponent->getId(),
-            ]);
-        }
-    }
-
     protected function getFormModel(): Model | string | null
     {
         return null;
@@ -295,8 +280,14 @@ trait InteractsWithForms
             'form' => $this->makeForm()
                 ->schema($this->getFormSchema())
                 ->model($this->getFormModel())
-                ->statePath($this->getFormStatePath()),
+                ->statePath($this->getFormStatePath())
+                ->context($this->getFormContext()),
         ];
+    }
+
+    protected function getFormContext(): ?string
+    {
+        return null;
     }
 
     protected function getFormStatePath(): ?string
